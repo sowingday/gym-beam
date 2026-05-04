@@ -1,0 +1,77 @@
+{
+  "name": "WorkoutTemplate",
+  "type": "object",
+  "properties": {
+    "template_index": {
+      "type": "number",
+      "description": "Unique 5-digit index (e.g. 20000)"
+    },
+    "name": {
+      "type": "string",
+      "description": "Name of the workout template"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Ganzk\u00f6rper",
+        "Oberk\u00f6rper",
+        "Unterk\u00f6rper",
+        "Push",
+        "Pull",
+        "Core",
+        "Cardio",
+        "Stretching",
+        "Yoga",
+        "Warm-up",
+        "Cooldown",
+        "Fokus"
+      ],
+      "description": "Primary category"
+    },
+    "tags": {
+      "type": "string",
+      "description": "Comma-separated tags (e.g. Reha, Mobility, ohne Springen)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Short description of the workout"
+    },
+    "exercises": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "exercise_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "duration": {
+            "type": "number"
+          },
+          "animation_type": {
+            "type": "string"
+          },
+          "use_sets": {
+            "type": "boolean"
+          },
+          "sets": {
+            "type": "number"
+          },
+          "reps": {
+            "type": "number"
+          }
+        }
+      },
+      "default": []
+    }
+  },
+  "required": [
+    "name",
+    "category"
+  ]
+}

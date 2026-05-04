@@ -1,0 +1,104 @@
+{
+  "version": 1,
+  "generatedAt": "2026-05-02T21:09:21",
+  "styles": [
+    "Deep House",
+    "Techno"
+  ],
+  "tracks": [
+    {
+      "index": "020001",
+      "name": "BenJuno - Driving Focus",
+      "musicStyle": "Deep House",
+      "fileName": "BenJuno - Driving Focus.mp3",
+      "src": "/assets/music/Deep House/BenJuno - Driving Focus.mp3",
+      "loop": true,
+      "bpm": null,
+      "duration": 161,
+      "active": true
+    },
+    {
+      "index": "060001",
+      "name": "BenJuno - Driving Circuit Flow",
+      "musicStyle": "Techno",
+      "fileName": "BenJuno - Driving Circuit Flow.mp3",
+      "src": "/assets/music/Techno/BenJuno - Driving Circuit Flow.mp3",
+      "loop": true,
+      "bpm": null,
+      "duration": 60,
+      "active": true
+    },
+    {
+      "index": "060002",
+      "name": "BenJuno - Relentless Treadmill - Variante 2",
+      "musicStyle": "Techno",
+      "fileName": "BenJuno - Relentless Treadmill - Variante 2.mp3",
+      "src": "/assets/music/Techno/BenJuno - Relentless Treadmill - Variante 2.mp3",
+      "loop": true,
+      "bpm": null,
+      "duration": 248,
+      "active": true
+    },
+    {
+      "index": "060003",
+      "name": "BenJuno - Relentless Treadmill",
+      "musicStyle": "Techno",
+      "fileName": "BenJuno - Relentless Treadmill.mp3",
+      "src": "/assets/music/Techno/BenJuno - Relentless Treadmill.mp3",
+      "loop": true,
+      "bpm": null,
+      "duration": 292,
+      "active": true
+    }
+  ],
+  "tracksByStyle": {
+    "Deep House": [
+      {
+        "index": "020001",
+        "name": "BenJuno - Driving Focus",
+        "musicStyle": "Deep House",
+        "fileName": "BenJuno - Driving Focus.mp3",
+        "src": "/assets/music/Deep House/BenJuno - Driving Focus.mp3",
+        "loop": true,
+        "bpm": null,
+        "duration": 161,
+        "active": true
+      }
+    ],
+    "Techno": [
+      {
+        "index": "060001",
+        "name": "BenJuno - Driving Circuit Flow",
+        "musicStyle": "Techno",
+        "fileName": "BenJuno - Driving Circuit Flow.mp3",
+        "src": "/assets/music/Techno/BenJuno - Driving Circuit Flow.mp3",
+        "loop": true,
+        "bpm": null,
+        "duration": 60,
+        "active": true
+      },
+      {
+        "index": "060002",
+        "name": "BenJuno - Relentless Treadmill - Variante 2",
+        "musicStyle": "Techno",
+        "fileName": "BenJuno - Relentless Treadmill - Variante 2.mp3",
+        "src": "/assets/music/Techno/BenJuno - Relentless Treadmill - Variante 2.mp3",
+        "loop": true,
+        "bpm": null,
+        "duration": 248,
+        "active": true
+      },
+      {
+        "index": "060003",
+        "name": "BenJuno - Relentless Treadmill",
+        "musicStyle": "Techno",
+        "fileName": "BenJuno - Relentless Treadmill.mp3",
+        "src": "/assets/music/Techno/BenJuno - Relentless Treadmill.mp3",
+        "loop": true,
+        "bpm": null,
+        "duration": 292,
+        "active": true
+      }
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+Workout Base exercises.json Export
+Zeit: 2026-05-02 20:15:36
+Excel: C:\Data\Workout Base\Animations\exercises v3.xlsx
+Sheet: Exercises
+Kopfzeile Excel-Zeile: 6
+Exportierte Übungen: 1180
+Indexbereich: 10000 bis 11179
+Ausgabedatei: C:\Data\Workout Base\workout-base-b44\public\assets\data\exercises.json
+
+Warnungen: 0
+
+Fehlende Animationen: 0
+
+Animationen ohne passende Excel-Übung: 0

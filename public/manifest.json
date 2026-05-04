@@ -1,0 +1,16 @@
+{
+  "name": "Workout Base",
+  "short_name": "WorkoutBase",
+  "description": "Dein persoenlicher Workout-Planer",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b5bdb",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

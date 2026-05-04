@@ -1,0 +1,18 @@
+{
+  "name": "BodyWeight",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "description": "ISO date YYYY-MM-DD"
+    },
+    "weight_kg": {
+      "type": "number",
+      "description": "Body weight in kg"
+    }
+  },
+  "required": [
+    "date",
+    "weight_kg"
+  ]
+}

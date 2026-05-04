@@ -1,0 +1,82 @@
+{
+  "name": "Workout",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the workout"
+    },
+    "weekday": {
+      "type": "string",
+      "enum": [
+        "Mo",
+        "Di",
+        "Mi",
+        "Do",
+        "Fr",
+        "Sa",
+        "So",
+        ""
+      ],
+      "default": "",
+      "description": "Legacy single weekday"
+    },
+    "weekdays": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Assigned weekdays (multi)"
+    },
+    "color": {
+      "type": "string",
+      "default": "#212121",
+      "description": "Workout color hex"
+    },
+    "exercises": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "exercise_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "duration": {
+            "type": "number"
+          },
+          "animation_type": {
+            "type": "string"
+          },
+          "use_sets": {
+            "type": "boolean"
+          },
+          "sets": {
+            "type": "number"
+          },
+          "reps": {
+            "type": "number"
+          },
+          "weight_kg": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "sort_order": {
+      "type": "number"
+    },
+    "workout_number": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}
