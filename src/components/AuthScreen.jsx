@@ -1,8 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Dumbbell, LogIn, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/lib/AuthContext';
+
+function buildSuggestedName(email) {
+  const localPart = String(email || '').split('@')[0].trim();
+  return localPart.length >= 2 ? localPart.slice(0, 40) : '';
+}
 
 export default function AuthScreen() {
   const { signInWithPassword, signUpWithPassword, isLoadingAuth } = useAuth();
@@ -10,9 +15,19 @@ export default function AuthScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [displayNameTouched, setDisplayNameTouched] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (mode !== 'signup') return;
+
+    const suggestedName = buildSuggestedName(email);
+    if (!displayNameTouched || displayName === '' || displayName === buildSuggestedName('')) {
+      setDisplayName(suggestedName);
+    }
+  }, [displayName, displayNameTouched, email, mode]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -24,9 +39,14 @@ export default function AuthScreen() {
       if (mode === 'login') {
         await signInWithPassword(email.trim(), password);
       } else {
-        await signUpWithPassword(email.trim(), password, displayName.trim());
+        const trimmedName = displayName.trim();
+        if (trimmedName.length < 2) {
+          throw new Error('Bitte gib einen Benutzernamen mit mindestens 2 Zeichen ein.');
+        }
+        await signUpWithPassword(email.trim(), password, trimmedName);
         setSuccess('Account erstellt. Du kannst Dich jetzt anmelden.');
         setMode('login');
+        setPassword('');
       }
     } catch (submitError) {
       setError(submitError?.message || 'Anmeldung fehlgeschlagen.');
@@ -56,7 +76,13 @@ export default function AuthScreen() {
             Anmelden
           </button>
           <button
-            onClick={() => { setMode('signup'); setError(''); setSuccess(''); }}
+            onClick={() => {
+              setMode('signup');
+              setError('');
+              setSuccess('');
+              setDisplayNameTouched(false);
+              setDisplayName(buildSuggestedName(email));
+            }}
             className={`flex-1 py-2.5 text-sm font-body font-semibold transition-colors ${mode === 'signup' ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted/50'}`}
           >
             Registrieren
@@ -65,12 +91,21 @@ export default function AuthScreen() {
 
         <form onSubmit={handleSubmit} className="space-y-3">
           {mode === 'signup' ? (
-            <Input
-              value={displayName}
-              onChange={(event) => setDisplayName(event.target.value)}
-              placeholder="Anzeigename"
-              autoComplete="nickname"
-            />
+            <div className="space-y-1">
+              <Input
+                value={displayName}
+                onChange={(event) => {
+                  setDisplayName(event.target.value);
+                  setDisplayNameTouched(true);
+                }}
+                placeholder="Benutzername"
+                autoComplete="nickname"
+                required
+              />
+              <p className="text-xs text-muted-foreground font-body">
+                Benutzername ist Pflicht, kann aber direkt angepasst werden.
+              </p>
+            </div>
           ) : null}
           <Input
             value={email}
