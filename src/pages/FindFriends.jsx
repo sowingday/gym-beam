@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import SelectFriend from './SelectFriend';
 import { useI18n } from '../lib/i18n';
 import { getCurrentAuthUser } from '../lib/authClient';
+import { shareText } from '../lib/shareService';
 import { fetchFollows, followUser, unfollowUser } from '../lib/socialService';
 
 export default function FindFriends() {
@@ -43,15 +44,7 @@ export default function FindFriends() {
     const text = language === 'en'
       ? `Follow my training on Custom Workouts!\n${shareBaseUrl}`
       : `Folge meinem Training bei Custom Workouts!\n${shareBaseUrl}`;
-
-    if (navigator.share) {
-      navigator.share({ text }).catch(() => {});
-      return;
-    }
-
-    navigator.clipboard.writeText(text).then(() => {
-      window.alert(language === 'en' ? 'Link copied!' : 'Link kopiert!');
-    });
+    await shareText(text, language === 'en' ? 'Link' : 'Link');
   };
 
   const handleFollowToggle = async (targetName, targetEmail) => {

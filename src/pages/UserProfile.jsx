@@ -28,6 +28,13 @@ const Field = memo(({ label, required, hint, children }) => (
   </div>
 ));
 
+function parseOptionalNumber(value) {
+  if (value == null || value === '') return null;
+  const normalized = String(value).replace(',', '.').trim();
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 export default function UserProfile() {
   const navigate = useNavigate();
   const fileRef = useRef(null);
@@ -38,6 +45,7 @@ export default function UserProfile() {
       nameMin: 'At least 2 characters required.',
       nameTaken: 'This username is already taken.',
       savedLocal: 'Saved locally.',
+      saved: 'Profile saved!',
       nameSaved: 'Username saved!',
       nameSavedLocal: 'Name saved locally.',
       pictureSaved: 'Profile picture saved!',
@@ -73,6 +81,7 @@ export default function UserProfile() {
       nameMin: 'Mindestens 2 Zeichen erforderlich.',
       nameTaken: 'Dieser Benutzername ist bereits vergeben.',
       savedLocal: 'Lokal gespeichert.',
+      saved: 'Profil gespeichert!',
       nameSaved: 'Benutzername gespeichert!',
       nameSavedLocal: 'Name lokal gespeichert.',
       pictureSaved: 'Profilbild gespeichert!',
@@ -184,7 +193,7 @@ export default function UserProfile() {
           return;
         }
       }
-      const result = await saveProfile(b44, { profile_name: name, displayName: name });
+      const result = await saveProfile(null, { profile_name: name, displayName: name });
       setMe((prev) => ({ ...prev, displayName: name, profile_name: name }));
       setEditingName(false);
       setNameError('');
@@ -203,9 +212,9 @@ export default function UserProfile() {
     setSaving(true);
     const fields = {
       profile_gender: profileGender || null,
-      profile_age: profileAge ? Number(profileAge) : null,
-      profile_height: profileHeight ? Number(profileHeight) : null,
-      profile_weight: profileWeight ? Number(profileWeight) : null,
+      profile_age: parseOptionalNumber(profileAge),
+      profile_height: parseOptionalNumber(profileHeight),
+      profile_weight: parseOptionalNumber(profileWeight),
     };
 
     if (me?._isOnline && fields.profile_weight !== null && fields.profile_weight !== (me?.profile_weight ?? null)) {
@@ -217,7 +226,7 @@ export default function UserProfile() {
 
     const result = await saveProfile(null, fields);
     setMe((prev) => ({ ...prev, ...fields }));
-    toast.success(result.source === 'local' ? copy.savedLocal : copy.save);
+    toast.success(result.source === 'local' ? copy.savedLocal : copy.saved);
     setSaving(false);
   };
 
