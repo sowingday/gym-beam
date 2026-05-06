@@ -22,12 +22,11 @@ export default function AuthScreen() {
 
   useEffect(() => {
     if (mode !== 'signup') return;
+    if (displayNameTouched) return;
 
     const suggestedName = buildSuggestedName(email);
-    if (!displayNameTouched || displayName === '' || displayName === buildSuggestedName('')) {
-      setDisplayName(suggestedName);
-    }
-  }, [displayName, displayNameTouched, email, mode]);
+    setDisplayName(suggestedName);
+  }, [displayNameTouched, email, mode]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();

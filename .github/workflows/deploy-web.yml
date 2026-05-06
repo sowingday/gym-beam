@@ -24,6 +24,9 @@ jobs:
         run: npm ci
 
       - name: Build app
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: npm run build
 
       - name: Deploy dist via FTPS
@@ -37,3 +40,4 @@ jobs:
           local-dir: ./dist/
           server-dir: ${{ secrets.BITPALAST_DEPLOY_PATH }}/
           dangerous-clean-slate: false
+          log-level: verbose
