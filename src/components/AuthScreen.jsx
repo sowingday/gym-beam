@@ -92,13 +92,17 @@ export default function AuthScreen() {
           {mode === 'signup' ? (
             <div className="space-y-1">
               <Input
+                key="signup-display-name"
                 value={displayName}
                 onChange={(event) => {
                   setDisplayName(event.target.value);
                   setDisplayNameTouched(true);
                 }}
                 placeholder="Benutzername"
-                autoComplete="nickname"
+                autoComplete="off"
+                autoCapitalize="none"
+                spellCheck={false}
+                name="gymbeam-display-name"
               />
               <p className="text-xs text-muted-foreground font-body">
                 Optional, kann auch spaeter noch geaendert werden.
