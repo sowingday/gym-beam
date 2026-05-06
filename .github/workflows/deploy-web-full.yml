@@ -1,15 +1,12 @@
-name: Deploy Web App (Fast)
+name: Deploy Web App (Full Assets)
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       note:
-        description: "Verwendung: fuer normale Code-/UI-Aenderungen. Musik und Animationen werden hier nicht neu synchronisiert."
+        description: "Verwendung: nur starten, wenn Musik oder Animationen geaendert wurden oder der Webspace voll synchronisiert werden soll."
         required: false
-        default: "Fast deploy"
+        default: "Full asset deploy"
 
 jobs:
   deploy:
@@ -39,7 +36,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y lftp
 
-      - name: Deploy fast web bundle first, then index.html
+      - name: Deploy full web bundle first, then index.html
         env:
           BITPALAST_FTP_HOST: ${{ secrets.BITPALAST_FTP_HOST }}
           BITPALAST_FTP_PORT: ${{ secrets.BITPALAST_FTP_PORT }}
@@ -55,11 +52,7 @@ jobs:
           set net:timeout 20
           set net:max-retries 2
           set xfer:clobber true
-          mirror -R --delete --verbose=3 \
-            --exclude-glob index.html \
-            --exclude-glob assets/animations/** \
-            --exclude-glob assets/music/** \
-            ./dist "$BITPALAST_DEPLOY_PATH"
+          mirror -R --delete --verbose=3 --exclude-glob index.html ./dist "$BITPALAST_DEPLOY_PATH"
           put -O "$BITPALAST_DEPLOY_PATH" ./dist/index.html
           bye
           EOF

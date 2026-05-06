@@ -1,13 +1,24 @@
 # Bitpalast Web Deploy
 
-Das Repo kann die Web-App automatisch nach Bitpalast deployen, sobald `main` nach GitHub gepusht wird.
+Das Repo hat jetzt zwei Deploy-Workflows fuer Bitpalast.
 
-## Was der Workflow macht
+## Workflows
 
-- installiert Abhaengigkeiten mit `npm ci`
-- baut die App mit `npm run build`
-- laedt den Inhalt von `dist/` per `FTPS` nach Bitpalast hoch
-- uebertraegt zuerst Assets und schreibt `index.html` erst am Ende
+- `Deploy Web App (Fast)`
+  Laeuft automatisch bei jedem Push auf `main` und kann auch manuell gestartet werden.
+  Gedacht fuer normale Code-, UI- und Konfigurationsaenderungen.
+  Schwere Ordner wie `assets/music` und `assets/animations` werden dabei nicht neu synchronisiert.
+
+- `Deploy Web App (Full Assets)`
+  Laeuft nur manuell.
+  Gedacht fuer Aenderungen an Musik, Animationen oder wenn der Webspace komplett abgeglichen werden soll.
+
+Beide Workflows:
+
+- installieren Abhaengigkeiten mit `npm ci`
+- bauen die App mit `npm run build`
+- laden per `FTPS` nach Bitpalast hoch
+- schreiben `index.html` immer erst ganz am Ende
 
 ## Voraussetzung bei Bitpalast
 
@@ -50,7 +61,13 @@ Automatisch:
 
 Manuell:
 
-- in GitHub unter `Actions > Deploy Web App > Run workflow`
+- in GitHub unter `Actions > Deploy Web App (Fast) > Run workflow`
+- oder `Actions > Deploy Web App (Full Assets) > Run workflow`
+
+Empfehlung:
+
+- im Alltag `Deploy Web App (Fast)`
+- nur bei geaenderten Musik-/Animationsdateien `Deploy Web App (Full Assets)`
 
 ## Typische Fehler
 
