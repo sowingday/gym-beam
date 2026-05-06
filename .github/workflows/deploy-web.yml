@@ -1,0 +1,54 @@
+name: Deploy Web App
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build app
+        run: npm run build
+
+      - name: Start SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.BITPALAST_SSH_KEY }}
+
+      - name: Add host to known_hosts
+        env:
+          BITPALAST_HOST: ${{ secrets.BITPALAST_HOST }}
+          BITPALAST_PORT: ${{ secrets.BITPALAST_PORT }}
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "${BITPALAST_PORT:-22}" "$BITPALAST_HOST" >> ~/.ssh/known_hosts
+
+      - name: Deploy dist via rsync
+        env:
+          BITPALAST_HOST: ${{ secrets.BITPALAST_HOST }}
+          BITPALAST_PORT: ${{ secrets.BITPALAST_PORT }}
+          BITPALAST_USER: ${{ secrets.BITPALAST_USER }}
+          BITPALAST_DEPLOY_PATH: ${{ secrets.BITPALAST_DEPLOY_PATH }}
+        run: |
+          test -n "$BITPALAST_HOST"
+          test -n "$BITPALAST_USER"
+          test -n "$BITPALAST_DEPLOY_PATH"
+          rsync -az --delete \
+            -e "ssh -p ${BITPALAST_PORT:-22}" \
+            dist/ "${BITPALAST_USER}@${BITPALAST_HOST}:${BITPALAST_DEPLOY_PATH}/"
