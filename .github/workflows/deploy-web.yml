@@ -29,15 +29,28 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: npm run build
 
-      - name: Deploy dist via FTPS
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
-        with:
-          server: ${{ secrets.BITPALAST_FTP_HOST }}
-          username: ${{ secrets.BITPALAST_FTP_USER }}
-          password: ${{ secrets.BITPALAST_FTP_PASSWORD }}
-          protocol: ftps
-          port: ${{ secrets.BITPALAST_FTP_PORT }}
-          local-dir: ./dist/
-          server-dir: ${{ secrets.BITPALAST_DEPLOY_PATH }}/
-          dangerous-clean-slate: false
-          log-level: verbose
+      - name: Install lftp
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lftp
+
+      - name: Deploy assets first, then index.html
+        env:
+          BITPALAST_FTP_HOST: ${{ secrets.BITPALAST_FTP_HOST }}
+          BITPALAST_FTP_PORT: ${{ secrets.BITPALAST_FTP_PORT }}
+          BITPALAST_FTP_USER: ${{ secrets.BITPALAST_FTP_USER }}
+          BITPALAST_FTP_PASSWORD: ${{ secrets.BITPALAST_FTP_PASSWORD }}
+          BITPALAST_DEPLOY_PATH: ${{ secrets.BITPALAST_DEPLOY_PATH }}
+        run: |
+          lftp -u "$BITPALAST_FTP_USER","$BITPALAST_FTP_PASSWORD" -p "${BITPALAST_FTP_PORT:-21}" "$BITPALAST_FTP_HOST" <<EOF
+          set ftp:ssl-force true
+          set ftp:ssl-protect-data true
+          set ssl:verify-certificate false
+          set ftp:passive-mode true
+          set net:timeout 20
+          set net:max-retries 2
+          set xfer:clobber true
+          mirror -R --delete --verbose=3 --exclude-glob index.html ./dist "$BITPALAST_DEPLOY_PATH"
+          put -O "$BITPALAST_DEPLOY_PATH" ./dist/index.html
+          bye
+          EOF

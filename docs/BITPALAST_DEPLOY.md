@@ -7,6 +7,7 @@ Das Repo kann die Web-App automatisch nach Bitpalast deployen, sobald `main` nac
 - installiert Abhaengigkeiten mit `npm ci`
 - baut die App mit `npm run build`
 - laedt den Inhalt von `dist/` per `FTPS` nach Bitpalast hoch
+- uebertraegt zuerst Assets und schreibt `index.html` erst am Ende
 
 ## Voraussetzung bei Bitpalast
 
@@ -61,3 +62,6 @@ Manuell:
 
 - TLS-/Zertifikatsfehler
   Dann pruefen, ob Bitpalast fuer deinen Zugang wirklich `FTPS` auf dem gewaehlten Port erwartet.
+
+- `Timeout (control socket)`
+  Das kam mit der bisherigen FTP-Action vor. Der Workflow nutzt jetzt `lftp` und schreibt `index.html` erst ganz zum Schluss, damit die Website bei einem Abbruch nicht auf halbem Stand bleibt.
