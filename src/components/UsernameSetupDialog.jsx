@@ -14,8 +14,8 @@ export default function UsernameSetupDialog({ onDone }) {
 
   const handleSave = async () => {
     const name = value.trim();
-    if (name.length < 2) {
-      setError(language === 'en' ? 'The name must be at least 2 characters long.' : 'Der Name muss mindestens 2 Zeichen lang sein.');
+    if (name.length < 4) {
+      setError(language === 'en' ? 'The name must be at least 4 characters long.' : 'Der Name muss mindestens 4 Zeichen lang sein.');
       return;
     }
     setSaving(true);

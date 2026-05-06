@@ -42,8 +42,8 @@ export default function FindFriends() {
 
   const handleShare = async () => {
     const text = language === 'en'
-      ? `Follow my training on Custom Workouts!\n${shareBaseUrl}`
-      : `Folge meinem Training bei Custom Workouts!\n${shareBaseUrl}`;
+      ? `Follow my training on Gym-Beam!\n${shareBaseUrl}`
+      : `Folge meinem Training bei Gym-Beam!\n${shareBaseUrl}`;
     await shareText(text, language === 'en' ? 'Link' : 'Link');
   };
 

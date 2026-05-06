@@ -42,14 +42,14 @@ const AuthenticatedApp = () => {
 
     import('./lib/userService').then(({ getLocalUser }) => {
       const local = getLocalUser();
-      if (local.displayName && local.displayName.trim().length >= 2) {
+      if (local.displayName && local.displayName.trim().length >= 4) {
         setCheckingUsername(false);
         return;
       }
 
       getCurrentAuthUser().then((currentUser) => {
         const name = currentUser?.profile_name || currentUser?.displayName;
-        if (!name || name.trim().length < 2) {
+        if (!name || name.trim().length < 4) {
           setNeedsUsername(true);
         }
         setCheckingUsername(false);

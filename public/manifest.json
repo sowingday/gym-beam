@@ -1,7 +1,7 @@
 {
-  "name": "Workout Base",
-  "short_name": "WorkoutBase",
-  "description": "Dein persoenlicher Workout-Planer",
+  "name": "Gym-Beam",
+  "short_name": "Gym-Beam",
+  "description": "Dein persoenlicher Trainingsplaner",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

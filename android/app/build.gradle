@@ -10,10 +10,10 @@ def appFlatDirRepos = appLocalLibDirs.findAll { dir ->
 }
 
 android {
-    namespace = "com.sowingday.workoutbase"
+    namespace = "com.sowingday.gymbeam"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.sowingday.workoutbase"
+        applicationId "com.sowingday.gymbeam"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

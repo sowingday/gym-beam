@@ -1,5 +1,5 @@
 param(
-  [string]$TargetPath = "C:\Data\Workout Base\workout-base"
+  [string]$TargetPath = "C:\Data\Gym-Beam\gym-beam-supabase-copy"
 )
 
 $ErrorActionPreference = 'Stop'
@@ -49,7 +49,7 @@ if ($robocopyExit -ge 8) {
 Write-Host "Created local copy at: $TargetPath"
 Write-Host ""
 Write-Host "Next steps:"
-Write-Host "1. Create an empty GitHub repo named 'workout-base'."
+Write-Host "1. Create an empty GitHub repo named 'gym-beam'."
 Write-Host "2. Open the new folder:"
 Write-Host "   $TargetPath"
 Write-Host "3. Run:"
@@ -57,5 +57,5 @@ Write-Host "   git init"
 Write-Host "   git add ."
 Write-Host "   git commit -m `"Initial Supabase migration checkpoint`""
 Write-Host "   git branch -M main"
-Write-Host "   git remote add origin https://github.com/<your-user>/workout-base.git"
+Write-Host "   git remote add origin https://github.com/<your-user>/gym-beam.git"
 Write-Host "   git push -u origin main"

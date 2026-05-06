@@ -1,4 +1,4 @@
-package com.sowingday.workoutbase;
+package com.sowingday.gymbeam;
 
 import com.getcapacitor.BridgeActivity;
 

@@ -25,12 +25,12 @@ powershell -ExecutionPolicy Bypass -File .\scripts\create-supabase-repo-copy.ps1
 
 Standard-Ziel:
 
-`C:\Data\Workout Base\workout-base`
+`C:\Data\Gym-Beam\gym-beam-supabase-copy`
 
 ## GitHub-Schritte
 
-1. Neues leeres GitHub-Repo `workout-base` anlegen.
-2. Den neuen lokalen Ordner `C:\Data\Workout Base\workout-base` oeffnen.
+1. Neues leeres GitHub-Repo `gym-beam` anlegen.
+2. Den neuen lokalen Ordner `C:\Data\Gym-Beam\gym-beam-supabase-copy` oeffnen.
 3. Dort ausfuehren:
 
 ```powershell
@@ -38,11 +38,11 @@ git init
 git add .
 git commit -m "Initial Supabase version"
 git branch -M main
-git remote add origin https://github.com/<your-user>/workout-base.git
+git remote add origin https://github.com/<your-user>/gym-beam.git
 git push -u origin main
 ```
 
 ## Danach
 
-- Nur noch im neuen Repo `workout-base` weiterarbeiten
-- Das alte `workout-base-b44` als historischen Migrationsstand behalten
+- Nur noch im neuen Repo `gym-beam` weiterarbeiten
+- Das alte `workout-base-b44` als historischen Base44-Migrationsstand behalten

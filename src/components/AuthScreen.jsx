@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/AuthContext';
 
 function buildSuggestedName(email) {
   const localPart = String(email || '').split('@')[0].trim();
-  return localPart.length >= 2 ? localPart.slice(0, 40) : '';
+  return localPart.length >= 4 ? localPart.slice(0, 40) : '';
 }
 
 export default function AuthScreen() {
@@ -40,8 +40,8 @@ export default function AuthScreen() {
         await signInWithPassword(email.trim(), password);
       } else {
         const trimmedName = displayName.trim();
-        if (trimmedName.length < 2) {
-          throw new Error('Bitte gib einen Benutzernamen mit mindestens 2 Zeichen ein.');
+        if (trimmedName.length > 0 && trimmedName.length < 4) {
+          throw new Error('Wenn du einen Benutzernamen eingibst, muss er mindestens 4 Zeichen haben.');
         }
         await signUpWithPassword(email.trim(), password, trimmedName);
         setSuccess('Account erstellt. Du kannst Dich jetzt anmelden.');
@@ -63,7 +63,7 @@ export default function AuthScreen() {
             <Dumbbell className="w-6 h-6 text-primary" />
           </div>
           <div>
-            <h1 className="font-display text-3xl tracking-wide text-foreground">Workout Base</h1>
+            <h1 className="font-display text-3xl tracking-wide text-foreground">Gym-Beam</h1>
             <p className="text-sm text-muted-foreground font-body">Supabase Login</p>
           </div>
         </div>
@@ -100,20 +100,24 @@ export default function AuthScreen() {
                 }}
                 placeholder="Benutzername"
                 autoComplete="nickname"
-                required
               />
               <p className="text-xs text-muted-foreground font-body">
-                Benutzername ist Pflicht, kann aber direkt angepasst werden.
+                Optional, kann auch spaeter noch geaendert werden.
               </p>
             </div>
           ) : null}
-          <Input
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="E-Mail"
-            type="email"
-            autoComplete="email"
-          />
+          <div className="space-y-1">
+            <Input
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="E-Mail"
+              type="email"
+              autoComplete="email"
+            />
+            <p className="text-xs text-muted-foreground font-body">
+              Nicht oeffentlich sichtbar.
+            </p>
+          </div>
           <Input
             value={password}
             onChange={(event) => setPassword(event.target.value)}

@@ -1,6 +1,6 @@
-# Workout Base
+# Gym-Beam
 
-Workout Base ist eine React- und Capacitor-App fuer Trainingsplanung, Workout-Tracking und Social-Sharing mit Supabase als Backend.
+Gym-Beam ist eine React- und Capacitor-App fuer Trainingsplanung, Workout-Tracking und Social-Sharing mit Supabase als Backend.
 
 ## Voraussetzungen
 

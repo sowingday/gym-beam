@@ -42,7 +42,7 @@ export default function UserProfile() {
   const copy = language === 'en'
     ? {
       nameRequired: 'Name is required.',
-      nameMin: 'At least 2 characters required.',
+      nameMin: 'At least 4 characters required.',
       nameTaken: 'This username is already taken.',
       savedLocal: 'Saved locally.',
       saved: 'Profile saved!',
@@ -73,12 +73,12 @@ export default function UserProfile() {
       follow: 'Follow',
       noFollowers: 'No followers yet.',
       offlineInfo: 'Friends and followers are available once you are online.',
-      displayNamePlaceholder: 'Display name (min. 2 characters)',
+      displayNamePlaceholder: 'Display name (min. 4 characters)',
       clickAvatar: 'Change profile picture',
     }
     : {
       nameRequired: 'Name ist ein Pflichtfeld.',
-      nameMin: 'Mindestens 2 Zeichen erforderlich.',
+      nameMin: 'Mindestens 4 Zeichen erforderlich.',
       nameTaken: 'Dieser Benutzername ist bereits vergeben.',
       savedLocal: 'Lokal gespeichert.',
       saved: 'Profil gespeichert!',
@@ -109,7 +109,7 @@ export default function UserProfile() {
       follow: 'Folgen',
       noFollowers: 'Noch keine Follower.',
       offlineInfo: 'Freunde und Follower sind verfuegbar, sobald du online bist.',
-      displayNamePlaceholder: 'Anzeigename (min. 2 Zeichen)',
+      displayNamePlaceholder: 'Anzeigename (min. 4 Zeichen)',
       clickAvatar: 'Profilbild aendern',
     };
 
@@ -178,7 +178,7 @@ export default function UserProfile() {
       setNameError(copy.nameRequired);
       return;
     }
-    if (name.length < 2) {
+    if (name.length < 4) {
       setNameError(copy.nameMin);
       return;
     }
