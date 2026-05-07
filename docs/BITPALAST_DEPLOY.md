@@ -5,7 +5,7 @@ Das Repo hat jetzt zwei Deploy-Workflows fuer Bitpalast.
 ## Workflows
 
 - `Deploy Web App (Fast)`
-  Laeuft automatisch bei jedem Push auf `main` und kann auch manuell gestartet werden.
+  Laeuft nur manuell.
   Gedacht fuer normale Code-, UI- und Konfigurationsaenderungen.
   Schwere Ordner wie `assets/music` und `assets/animations` werden dabei nicht neu synchronisiert.
 
@@ -54,10 +54,6 @@ In GitHub unter `Settings > Secrets and variables > Actions` diese Repository-Se
 Wichtig: Vite liest diese Werte beim Build. Wenn sie in GitHub nicht als Secrets gesetzt sind, wird die Web-App zwar gebaut und deployed, aber Login/Registrierung enden dann mit `Supabase is not configured.`.
 
 ## Workflow starten
-
-Automatisch:
-
-- jeder Push auf `main`
 
 Manuell:
 
