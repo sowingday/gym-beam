@@ -47,13 +47,18 @@ jobs:
           BITPALAST_FTP_PASSWORD: ${{ secrets.BITPALAST_FTP_PASSWORD }}
           BITPALAST_DEPLOY_PATH: ${{ secrets.BITPALAST_DEPLOY_PATH }}
         run: |
-          lftp -u "$BITPALAST_FTP_USER","$BITPALAST_FTP_PASSWORD" -p "${BITPALAST_FTP_PORT:-21}" "$BITPALAST_FTP_HOST" <<EOF
+          for attempt in 1 2 3; do
+            echo "FTPS deploy attempt $attempt/3"
+            if lftp -u "$BITPALAST_FTP_USER","$BITPALAST_FTP_PASSWORD" -p "${BITPALAST_FTP_PORT:-21}" "$BITPALAST_FTP_HOST" <<EOF
+          set cmd:fail-exit true
           set ftp:ssl-force true
           set ftp:ssl-protect-data true
           set ssl:verify-certificate false
           set ftp:passive-mode true
-          set net:timeout 20
-          set net:max-retries 2
+          set net:timeout 60
+          set net:max-retries 8
+          set net:reconnect-interval-base 5
+          set net:reconnect-interval-max 30
           set xfer:clobber true
           mirror -R --delete --verbose=3 \
             --exclude-glob index.html \
@@ -63,3 +68,9 @@ jobs:
           put -O "$BITPALAST_DEPLOY_PATH" ./dist/index.html
           bye
           EOF
+            then
+              exit 0
+            fi
+            sleep 15
+          done
+          exit 1

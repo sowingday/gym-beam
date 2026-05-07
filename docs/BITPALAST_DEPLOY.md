@@ -81,4 +81,4 @@ Empfehlung:
   Dann pruefen, ob Bitpalast fuer deinen Zugang wirklich `FTPS` auf dem gewaehlten Port erwartet.
 
 - `Timeout (control socket)`
-  Das kam mit der bisherigen FTP-Action vor. Der Workflow nutzt jetzt `lftp` und schreibt `index.html` erst ganz zum Schluss, damit die Website bei einem Abbruch nicht auf halbem Stand bleibt.
+  Bitpalast trennt gelegentlich die FTPS-Control-Verbindung. Die Workflows nutzen deshalb `lftp` mit hoeheren Timeouts, Reconnects und drei kompletten Wiederholungsversuchen. `index.html` wird weiterhin erst ganz zum Schluss geschrieben.
