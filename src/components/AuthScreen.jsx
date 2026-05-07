@@ -63,7 +63,6 @@ export default function AuthScreen() {
           </div>
           <div>
             <h1 className="font-display text-3xl tracking-wide text-foreground">Gym-Beam</h1>
-            <p className="text-sm text-muted-foreground font-body">Supabase Login</p>
           </div>
         </div>
 
@@ -118,7 +117,7 @@ export default function AuthScreen() {
               autoComplete="email"
             />
             <p className="text-xs text-muted-foreground font-body">
-              Nicht oeffentlich sichtbar.
+              (nicht oeffentlich sichtbar)
             </p>
           </div>
           <Input
