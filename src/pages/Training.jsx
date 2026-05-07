@@ -65,10 +65,10 @@ export default function Training() {
       setWord: 'sets',
     }
     : {
-      totalSets: 'Saetze gesamt',
+      totalSets: 'Sätze gesamt',
       break: 'Pause',
-      skipBreak: 'Pause ueberspringen',
-      exercise: 'Uebung',
+      skipBreak: 'Pause überspringen',
+      exercise: 'Übung',
       weight: 'Gewicht',
       reps: 'Wdh.',
       save: 'Speichern',
@@ -80,7 +80,7 @@ export default function Training() {
       resume: 'Weiter',
       start: 'Start',
       next: 'Weiter',
-      setWord: 'Saetze',
+      setWord: 'Sätze',
     };
 
   const autostart = new URLSearchParams(window.location.search).get('autostart') === '1';
@@ -522,7 +522,7 @@ export default function Training() {
             <motion.div initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', duration: 0.6 }} className="font-display text-6xl md:text-8xl text-accent tracking-wider mb-4">{copy.finish}</motion.div>
             <motion.div initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', duration: 0.6, delay: 0.7 }} className="font-display text-4xl md:text-5xl text-primary tracking-wider mb-6">{copy.wellDone}</motion.div>
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.2 }} className="text-base font-body text-muted-foreground mb-8">
-              {completedCount} / {completedTotal} {language === 'en' ? copy.completed : `Uebungen ${copy.completed}`}
+              {completedCount} / {completedTotal} {language === 'en' ? copy.completed : `Übungen ${copy.completed}`}
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.5 }}>
               <Button onClick={handleFinish} size="lg" className="gap-3 h-16 px-10 text-xl font-display tracking-wider rounded-2xl shadow-xl bg-green-500 hover:bg-green-600 text-white shadow-green-500/30"><CheckCircle2 className="w-8 h-8" />OK</Button>

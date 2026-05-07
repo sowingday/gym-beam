@@ -25,7 +25,7 @@ export default function UsernameSetupDialog({ onDone }) {
     try {
       const available = await checkProfileNameAvailable(name);
       if (available === false) {
-        setError(language === 'en' ? 'This username is already taken. Please choose another one.' : 'Dieser Benutzername ist bereits vergeben. Bitte waehle einen anderen.');
+      setError(language === 'en' ? 'This username is already taken. Please choose another one.' : 'Dieser Benutzername ist bereits vergeben. Bitte wähle einen anderen.');
         setSaving(false);
         return;
       }
@@ -52,7 +52,7 @@ export default function UsernameSetupDialog({ onDone }) {
         <p className="text-sm text-muted-foreground font-body mb-5 leading-relaxed">
           {language === 'en'
             ? 'Enter your display name. You can change it anytime in the profile settings.'
-            : 'Gib deinen Anzeigenamen ein. Du kannst ihn jederzeit in den Profileinstellungen aendern.'}
+            : 'Gib deinen Anzeigenamen ein. Du kannst ihn jederzeit in den Profileinstellungen ändern.'}
         </p>
         <Input autoFocus value={value} onChange={(e) => { setValue(e.target.value); setError(''); }} onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); }} placeholder={language === 'en' ? 'Your name' : 'Dein Name'} className="mb-2 font-body" maxLength={40} />
         {error ? <p className="text-xs text-destructive font-body mb-3">{error}</p> : <div className="mb-3" />}
@@ -60,7 +60,7 @@ export default function UsernameSetupDialog({ onDone }) {
           {saving ? (language === 'en' ? 'Saving...' : 'Speichern...') : (language === 'en' ? 'Continue' : 'Weiter')}
         </Button>
         <button onClick={handleSkip} className="w-full text-xs text-muted-foreground font-body py-1 hover:text-foreground transition-colors">
-          {language === 'en' ? 'Skip' : 'Ueberspringen'}
+          {language === 'en' ? 'Skip' : 'Überspringen'}
         </button>
       </div>
     </div>

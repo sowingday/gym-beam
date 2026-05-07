@@ -37,7 +37,7 @@ export default function SharedWorkout() {
 
   const handleAccept = async () => {
     if (selectedDays.length === 0) {
-      toast.error(language === 'en' ? 'Please select at least one weekday.' : 'Bitte mindestens einen Wochentag auswaehlen.');
+      toast.error(language === 'en' ? 'Please select at least one weekday.' : 'Bitte mindestens einen Wochentag auswählen.');
       return;
     }
     setSaving(true);
@@ -53,11 +53,11 @@ export default function SharedWorkout() {
         workout_number: maxNum + 1,
       });
       sessionStorage.removeItem('wb_shared_workout');
-      toast.success(language === 'en' ? `"${workout.name}" was added to your plan!` : `"${workout.name}" wurde in Deinen Plan uebernommen!`);
+      toast.success(language === 'en' ? `"${workout.name}" was added to your plan!` : `"${workout.name}" wurde in Deinen Plan übernommen!`);
       setDone(true);
       setTimeout(() => navigate(`/workout/${newWorkout.id}`), 800);
     } catch {
-      toast.error(language === 'en' ? 'Error while importing.' : 'Fehler beim Uebernehmen.');
+      toast.error(language === 'en' ? 'Error while importing.' : 'Fehler beim Übernehmen.');
     }
     setSaving(false);
   };
@@ -86,7 +86,7 @@ export default function SharedWorkout() {
 
         <div className="rounded-xl border border-border bg-card overflow-hidden shadow-[0_6px_20px_0_rgba(0,0,0,0.18)] mb-6">
           {exercises.length === 0 ? (
-            <p className="text-sm text-muted-foreground font-body text-center py-6">{language === 'en' ? 'No exercises.' : 'Keine Uebungen.'}</p>
+            <p className="text-sm text-muted-foreground font-body text-center py-6">{language === 'en' ? 'No exercises.' : 'Keine Übungen.'}</p>
           ) : (
             exercises.map((exercise, index) => (
               <div key={index} className="flex items-center gap-3 px-4 py-3 border-b border-border/50 last:border-0">
@@ -108,7 +108,7 @@ export default function SharedWorkout() {
 
         <div className="rounded-xl border border-border bg-card p-5 shadow-[0_6px_20px_0_rgba(0,0,0,0.18)] mb-6">
           <p className="text-sm font-semibold font-body text-foreground mb-3">
-            {language === 'en' ? 'Which days do you want to train?' : 'An welchen Tagen moechtest Du trainieren?'}
+            {language === 'en' ? 'Which days do you want to train?' : 'An welchen Tagen möchtest Du trainieren?'}
           </p>
           <div className="flex flex-wrap gap-2">
             {WEEKDAYS.map((day) => (
@@ -126,10 +126,10 @@ export default function SharedWorkout() {
         <Button onClick={handleAccept} disabled={saving || done} className="w-full h-12 text-base font-body gap-2 bg-accent hover:bg-accent/90 text-accent-foreground shadow-[0_4px_12px_0_rgba(0,0,0,0.18)]">
           {done ? <Check className="w-5 h-5" /> : saving ? <Dumbbell className="w-5 h-5 animate-pulse" /> : <Plus className="w-5 h-5" />}
           {done
-            ? (language === 'en' ? 'Imported!' : 'Uebernommen!')
+            ? (language === 'en' ? 'Imported!' : 'Übernommen!')
             : saving
-              ? (language === 'en' ? 'Importing...' : 'Wird uebernommen...')
-              : (language === 'en' ? 'Add to my plan' : 'In meinen Plan uebernehmen')}
+              ? (language === 'en' ? 'Importing...' : 'Wird übernommen...')
+              : (language === 'en' ? 'Add to my plan' : 'In meinen Plan übernehmen')}
         </Button>
       </div>
     </div>

@@ -71,7 +71,7 @@ export default function InboxMessages() {
                 <p className="text-[11px] text-muted-foreground font-body mt-0.5">
                   {message.created_date ? format(parseISO(message.created_date), 'dd. MMM yyyy', { locale: dateLocale }) : ''}
                   {' · '}
-                  {language === 'en' ? 'Tap to open' : 'Antippen zum Oeffnen'}
+                {language === 'en' ? 'Tap to open' : 'Antippen zum Öffnen'}
                 </p>
               </div>
               {!message.read ? <div className="w-2 h-2 bg-primary rounded-full mt-1.5 shrink-0" /> : null}

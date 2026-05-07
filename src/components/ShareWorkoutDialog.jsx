@@ -55,7 +55,7 @@ export default function ShareWorkoutDialog({ workout, onClose }) {
     const name = me?.profile_name || me?.full_name || 'Someone';
     const text = language === 'en'
       ? `${name} shared the workout "${workout.name}" (${count} exercises) with you!\n${shareBaseUrl}`
-      : `${name} hat das Workout "${workout.name}" (${count} Uebungen) mit Dir geteilt!\n${shareBaseUrl}`;
+      : `${name} hat das Workout "${workout.name}" (${count} Übungen) mit Dir geteilt!\n${shareBaseUrl}`;
     await shareText(text, language === 'en' ? 'Workout link' : 'Workout-Link');
     onClose();
   };
@@ -89,11 +89,11 @@ export default function ShareWorkoutDialog({ workout, onClose }) {
             <p className="text-xs text-muted-foreground font-body mb-4">
               {language === 'en'
                 ? 'Share this workout through a messenger app or copy the link.'
-                : 'Teile dieses Workout ueber eine Messenger-App oder kopiere den Link.'}
+              : 'Teile dieses Workout über eine Messenger-App oder kopiere den Link.'}
             </p>
             <Button onClick={handleShareExternal} className="w-full gap-2 shadow-[0_4px_12px_0_rgba(0,0,0,0.18)]">
               <ExternalLink className="w-4 h-4" />
-              {language === 'en' ? 'Share via messenger' : 'Ueber Messenger teilen'}
+            {language === 'en' ? 'Share via messenger' : 'Über Messenger teilen'}
             </Button>
           </div>
         ) : (
@@ -102,7 +102,7 @@ export default function ShareWorkoutDialog({ workout, onClose }) {
               <p className="text-xs text-muted-foreground text-center py-4 font-body">
                 {language === 'en'
                   ? 'No mutual contacts yet. If someone follows you and you follow back, they will appear here.'
-                  : 'Noch keine gegenseitigen Kontakte. Wenn jemand Dir folgt und Du zurueckfolgst, erscheint er hier.'}
+              : 'Noch keine gegenseitigen Kontakte. Wenn jemand Dir folgt und Du zurückfolgst, erscheint er hier.'}
               </p>
             ) : (
               <>

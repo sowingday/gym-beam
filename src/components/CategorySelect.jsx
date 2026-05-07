@@ -6,7 +6,7 @@ export default function CategorySelect({ value, onChange, options, placeholder, 
   const { language } = useI18n();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
-  const resolvedPlaceholder = placeholder || (language === 'en' ? 'Select' : 'Auswaehlen');
+  const resolvedPlaceholder = placeholder || (language === 'en' ? 'Select' : 'Auswählen');
 
   useEffect(() => {
     if (!open) return;

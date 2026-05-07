@@ -13,7 +13,7 @@ import { listWorkoutTemplates } from '../lib/workoutDataService';
 function getCategories(language) {
   return language === 'en'
     ? ['All workouts', 'Own workouts', 'Full body', 'Upper body', 'Lower body', 'Push', 'Pull', 'Core', 'Cardio', 'Stretching', 'Yoga', 'Warm-up', 'Cooldown', 'Focus']
-    : ['Alle Workouts', 'Eigene Workouts', 'Ganzkoerper', 'Oberkoerper', 'Unterkoerper', 'Push', 'Pull', 'Core', 'Cardio', 'Stretching', 'Yoga', 'Warm-up', 'Cooldown', 'Fokus'];
+    : ['Alle Workouts', 'Eigene Workouts', 'Ganzkörper', 'Oberkörper', 'Unterkörper', 'Push', 'Pull', 'Core', 'Cardio', 'Stretching', 'Yoga', 'Warm-up', 'Cooldown', 'Fokus'];
 }
 
 function getTemplateTotals(template, breakDuration) {

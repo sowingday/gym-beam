@@ -104,7 +104,7 @@ export default function AuthScreen() {
                 name="gymbeam-display-name"
               />
               <p className="text-xs text-muted-foreground font-body">
-                Optional, kann auch spaeter noch geaendert werden.
+                  Optional, kann auch später noch geändert werden.
               </p>
             </div>
           ) : null}
@@ -117,7 +117,7 @@ export default function AuthScreen() {
               autoComplete="email"
             />
             <p className="text-xs text-muted-foreground font-body">
-              (nicht oeffentlich sichtbar)
+                (nicht öffentlich sichtbar)
             </p>
           </div>
           <Input

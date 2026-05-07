@@ -45,19 +45,19 @@ export default function WorkoutTemplatePage() {
     }
     : {
       notFound: 'Workout-Template nicht gefunden.',
-      backToDb: 'Zurueck zur Datenbank',
-      addToPlan: 'In den Plan uebernehmen',
-      adding: 'Wird hinzugefuegt...',
+      backToDb: 'Zurück zur Datenbank',
+      addToPlan: 'In den Plan übernehmen',
+      adding: 'Wird hinzugefügt...',
       startWorkout: 'Workout starten!',
-      exercises: 'Uebungen',
-      sets: 'Saetze',
-      chooseDays: 'Wochentage waehlen',
-      selectedDays: 'ausgewaehlt',
+      exercises: 'Übungen',
+      sets: 'Sätze',
+      chooseDays: 'Wochentage wählen',
+      selectedDays: 'ausgewählt',
       addToDays: 'Zu',
-      chooseDaysFirst: 'Tage auswaehlen...',
-      addWithoutDay: 'Ohne Wochentag hinzufuegen',
-      added: 'zum Plan hinzugefuegt!',
-      addError: 'Fehler beim Hinzufuegen.',
+      chooseDaysFirst: 'Tage auswählen...',
+      addWithoutDay: 'Ohne Wochentag hinzufügen',
+      added: 'zum Plan hinzugefügt!',
+      addError: 'Fehler beim Hinzufügen.',
     };
   const breakDuration = getBreakDuration();
   const [adding, setAdding] = useState(false);
@@ -213,7 +213,7 @@ export default function WorkoutTemplatePage() {
             {selectedDays.length > 0 ? <p className="text-xs text-muted-foreground font-body text-center mb-3">{selectedDays.length} {copy.selectedDays}</p> : null}
             <div className="flex flex-col gap-2">
               <Button onClick={() => { setShowDayPicker(false); doAddToPlan(selectedDays); }} disabled={adding || selectedDays.length === 0} className="w-full font-body">
-                {selectedDays.length > 0 ? `${copy.addToDays} ${selectedDays.join(', ')} ${language === 'en' ? 'add' : 'hinzufuegen'}` : copy.chooseDaysFirst}
+                {selectedDays.length > 0 ? `${copy.addToDays} ${selectedDays.join(', ')} ${language === 'en' ? 'add' : 'hinzufügen'}` : copy.chooseDaysFirst}
               </Button>
               <Button variant="ghost" onClick={() => { setShowDayPicker(false); doAddToPlan([]); }} disabled={adding} className="w-full font-body text-muted-foreground text-sm">
                 {copy.addWithoutDay}

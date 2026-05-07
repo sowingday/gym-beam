@@ -77,20 +77,20 @@ export default function WeekDayColumn({
     }
     : {
       today: 'Heute',
-      addWorkout: 'Workout hinzufuegen',
+      addWorkout: 'Workout hinzufügen',
       newWorkout: 'Neues Workout',
       existingWorkout: 'Vorhandenes Workout',
-      fromDb: 'Aus Workout-DB waehlen',
+      fromDb: 'Aus Workout-DB wählen',
       expand: 'Aufklappen',
       collapse: 'Einklappen',
       share: 'Teilen',
       rename: 'Umbenennen',
       removeFromDay: `Von ${dayLabel} entfernen`,
-      deleteAll: 'Komplett loeschen',
+      deleteAll: 'Komplett löschen',
       removeTitle: `Von ${dayLabel} entfernen?`,
-      deleteTitle: 'Workout komplett loeschen?',
+      deleteTitle: 'Workout komplett löschen?',
       removeDescription: 'Das Workout bleibt an anderen Wochentagen bestehen.',
-      deleteDescription: 'Das Workout wird an allen Wochentagen entfernt. Dieser Schritt kann nicht rueckgaengig gemacht werden.',
+      deleteDescription: 'Das Workout wird an allen Wochentagen entfernt. Dieser Schritt kann nicht rückgängig gemacht werden.',
     };
 
   return (

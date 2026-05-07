@@ -230,7 +230,7 @@ export async function saveLocalAvatar(file) {
     return { ok: false, reason: 'Keine gueltige Bilddatei.' };
   }
   if (file.size > MAX_AVATAR_BYTES) {
-    return { ok: false, reason: 'Bild zu gross fuer lokale Speicherung (max. ~600 KB). Bitte ein kleineres Bild waehlen.' };
+      return { ok: false, reason: 'Bild zu groß für lokale Speicherung (max. ~600 KB). Bitte ein kleineres Bild wählen.' };
   }
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -240,7 +240,7 @@ export async function saveLocalAvatar(file) {
         saveLocalProfile({ profile_picture: dataUrl });
         resolve({ ok: true, dataUrl });
       } catch (_) {
-        resolve({ ok: false, reason: 'Lokaler Speicher voll. Bitte ein kleineres Bild waehlen.' });
+        resolve({ ok: false, reason: 'Lokaler Speicher voll. Bitte ein kleineres Bild wählen.' });
       }
     };
     reader.onerror = () => resolve({ ok: false, reason: 'Fehler beim Lesen der Datei.' });

@@ -204,7 +204,7 @@ export default function WorkoutPlan() {
     if (currentDays.includes(existingSheet.day)) {
       toast(language === 'en'
         ? `"${workout.name}" is already assigned to ${existingSheet.dayLabel}.`
-        : `"${workout.name}" ist bereits fuer ${existingSheet.dayLabel} eingetragen.`);
+      : `"${workout.name}" ist bereits für ${existingSheet.dayLabel} eingetragen.`);
       setExistingSheet(null);
       return;
     }

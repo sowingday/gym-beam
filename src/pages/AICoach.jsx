@@ -18,10 +18,10 @@ export default function AICoach() {
       { icon: '+', title: 'Training plans', desc: 'Receive a complete custom training plan.' },
     ]
     : [
-      { icon: '?', title: 'Fragen beantworten', desc: 'Stelle Deine Fragen rund um Training, Ernaehrung und Fitness.' },
+      { icon: '?', title: 'Fragen beantworten', desc: 'Stelle Deine Fragen rund um Training, Ernährung und Fitness.' },
       { icon: '!', title: 'Tipps und Tricks', desc: 'Erhalte personalisierte Tipps zur Verbesserung Deines Trainings.' },
-      { icon: '*', title: 'Massgeschneiderte Workouts', desc: 'Lasse Dir Workouts erstellen, die zu Dir passen.' },
-      { icon: '+', title: 'Trainingsplan', desc: 'Erhalte einen kompletten, massgeschneiderten Trainingsplan.' },
+      { icon: '*', title: 'Maßgeschneiderte Workouts', desc: 'Lasse Dir Workouts erstellen, die zu Dir passen.' },
+      { icon: '+', title: 'Trainingsplan', desc: 'Erhalte einen kompletten, maßgeschneiderten Trainingsplan.' },
     ];
 
   return (
@@ -56,12 +56,12 @@ export default function AICoach() {
             onChange={(e) => setQuestion(e.target.value)}
             placeholder={language === 'en'
               ? "e.g. 'How can I improve my bench press strength?' or 'Create a 3-day training plan for me'"
-              : "z. B. 'Wie kann ich meine Kraft im Bankdruecken verbessern?' oder 'Erstelle mir einen Trainingsplan fuer 3x Training pro Woche'"}
+              : "z. B. 'Wie kann ich meine Kraft im Bankdrücken verbessern?' oder 'Erstelle mir einen Trainingsplan für 3x Training pro Woche'"}
             className="w-full px-4 py-3 rounded-lg border border-input bg-transparent text-base font-body placeholder-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none h-24 mb-4"
           />
           <Button disabled className="w-full h-11 text-base font-body gap-2 opacity-50">
             <Sparkles className="w-4 h-4" />
-            {language === 'en' ? 'AI answers will be available soon' : 'KI-Antwort wird in Kuerze verfuegbar sein'}
+            {language === 'en' ? 'AI answers will be available soon' : 'KI-Antwort wird in Kürze verfügbar sein'}
           </Button>
         </div>
 
@@ -69,7 +69,7 @@ export default function AICoach() {
           <p className="text-xs text-muted-foreground font-body leading-relaxed">
             {language === 'en'
               ? 'The AI coach will answer questions, give personalized tips, create tailored workouts, and assemble full training plans. This feature will be unlocked soon.'
-              : 'Der KI-Coach wird Fragen beantworten, personalisierte Tipps geben, massgeschneiderte Workouts erstellen und vollstaendige Trainingsplaene zusammenstellen. Diese Funktion wird in Kuerze freigeschaltet.'}
+              : 'Der KI-Coach wird Fragen beantworten, personalisierte Tipps geben, maßgeschneiderte Workouts erstellen und vollständige Trainingspläne zusammenstellen. Diese Funktion wird in Kürze freigeschaltet.'}
           </p>
         </div>
       </div>

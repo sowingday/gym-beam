@@ -30,7 +30,7 @@ export default function AddExistingWorkoutSheet({ open, onClose, onSelect, worko
       <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-md max-h-[70vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <p className="text-sm font-semibold text-foreground font-body">
-            {language === 'en' ? `Add workout to ${dayLabel}` : `Workout zu ${dayLabel} hinzufuegen`}
+            {language === 'en' ? `Add workout to ${dayLabel}` : `Workout zu ${dayLabel} hinzufügen`}
           </p>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
             <X className="w-4 h-4" />

@@ -180,7 +180,7 @@ export default function ColorPickerPopover({ color, onChange, onClose }) {
 
       <div className="space-y-3">
         <Slider label="Hue" value={draftHsl.h} min={0} max={360} onChange={(value) => setDraftHsl((current) => ({ ...current, h: value }))} background="linear-gradient(90deg, #ff0000 0%, #ffff00 17%, #00ff00 33%, #00ffff 50%, #0000ff 67%, #ff00ff 83%, #ff0000 100%)" />
-        <Slider label={language === 'en' ? 'Saturation' : 'Saettigung'} value={draftHsl.s} min={0} max={100} onChange={(value) => setDraftHsl((current) => ({ ...current, s: value }))} background={`linear-gradient(90deg, ${hslToHex(draftHsl.h, 0, draftHsl.l)} 0%, ${hslToHex(draftHsl.h, 100, draftHsl.l)} 100%)`} />
+              <Slider label={language === 'en' ? 'Saturation' : 'Sättigung'} value={draftHsl.s} min={0} max={100} onChange={(value) => setDraftHsl((current) => ({ ...current, s: value }))} background={`linear-gradient(90deg, ${hslToHex(draftHsl.h, 0, draftHsl.l)} 0%, ${hslToHex(draftHsl.h, 100, draftHsl.l)} 100%)`} />
         <Slider label={language === 'en' ? 'Brightness' : 'Helligkeit'} value={draftHsl.l} min={0} max={100} onChange={(value) => setDraftHsl((current) => ({ ...current, l: value }))} background={`linear-gradient(90deg, ${hslToHex(draftHsl.h, draftHsl.s, 0)} 0%, ${hslToHex(draftHsl.h, draftHsl.s, 50)} 50%, ${hslToHex(draftHsl.h, draftHsl.s, 100)} 100%)`} />
       </div>
 
@@ -189,7 +189,7 @@ export default function ColorPickerPopover({ color, onChange, onClose }) {
           {language === 'en' ? 'Cancel' : 'Abbrechen'}
         </button>
         <button type="button" onClick={applyColor} className="rounded-md bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90">
-          {language === 'en' ? 'Apply' : 'Uebernehmen'}
+                {language === 'en' ? 'Apply' : 'Übernehmen'}
         </button>
       </div>
     </div>

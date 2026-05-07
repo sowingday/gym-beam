@@ -8,7 +8,7 @@ import { useI18n } from '../lib/i18n';
 
 const MUSIC_MODES = {
   de: [
-    { id: 'loop', label: 'Ein loopfaehiges Lied wiederholen' },
+    { id: 'loop', label: 'Ein loopfähiges Lied wiederholen' },
     { id: 'all', label: 'Alle passenden Lieder abspielen' },
   ],
   en: [
@@ -26,8 +26,8 @@ const MUSIC_STYLES = {
     { id: 'synthwave', name: 'Synthwave', desc: 'Melodischer Electro-Sound mit moderner Retro-Atmosphaere.' },
     { id: 'edm', name: 'EDM', desc: 'Energiegeladener elektronischer Sound ohne extreme Drops.' },
     { id: 'techno', name: 'Techno', desc: 'Geradliniger Beat mit konstantem Drive.' },
-    { id: 'lofi_hiphop', name: 'Lo-fi Hip Hop', desc: 'Entspannter Groove fuer ruhige Trainingsphasen.' },
-    { id: 'ambient', name: 'Ambient', desc: 'Ruhiger Hintergrundsound fuer Stretching und Cooldown.' },
+    { id: 'lofi_hiphop', name: 'Lo-fi Hip Hop', desc: 'Entspannter Groove für ruhige Trainingsphasen.' },
+    { id: 'ambient', name: 'Ambient', desc: 'Ruhiger Hintergrundsound für Stretching und Cooldown.' },
   ],
   en: [
     { id: 'none', name: 'Silence', desc: null, empty: 'No background music' },
@@ -125,10 +125,10 @@ export default function Settings() {
       countdownTitle: 'Trainingsmodus - Countdown',
       musicTitle: 'Trainingsmodus - Hintergrundmusik',
       totalDuration: 'Gesamttrainingsdauer anzeigen',
-      exerciseDuration: 'Uebungsdauer anzeigen',
-      totalCounter: 'Zaehler Gesamttrainingsdauer',
-      exerciseCounter: 'Zaehler Uebungsdauer',
-      breakBetween: 'Pause zwischen Uebungen',
+      exerciseDuration: 'Übungsdauer anzeigen',
+      totalCounter: 'Zähler Gesamttrainingsdauer',
+      exerciseCounter: 'Zähler Übungsdauer',
+      breakBetween: 'Pause zwischen Übungen',
       countdownSound: 'Countdown-Ton',
       countdownStart: 'Countdown beim Start',
       yes: 'ja',
@@ -137,7 +137,7 @@ export default function Settings() {
       down: 'runter',
       on: 'an',
       off: 'aus',
-      musicHint: 'Beim Training werden zufaellig Lieder passend zum gewaehlten Musikstil abgespielt.',
+      musicHint: 'Beim Training werden zufällig Lieder passend zum gewählten Musikstil abgespielt.',
       preview: 'Vorschau',
     },
     en: {

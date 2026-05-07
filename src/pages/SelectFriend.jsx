@@ -62,7 +62,7 @@ export default function SelectFriend({ mode, me, follows, onBack }) {
           <p className="text-xs text-muted-foreground font-body mb-4 p-3 rounded-lg bg-muted/40 border border-border">
             {language === 'en'
               ? 'Note: contact access will be implemented in a later version. All users are shown here for now.'
-              : 'Hinweis: Kontaktzugriff wird in einer spaeteren Version implementiert. Alle Benutzer werden angezeigt.'}
+            : 'Hinweis: Kontaktzugriff wird in einer späteren Version implementiert. Alle Benutzer werden angezeigt.'}
           </p>
         ) : null}
 
