@@ -2,6 +2,7 @@ import { normalizeTemplates, normalizeWorkouts } from './normalize';
 import { LOCAL_TEMPLATES } from './localTemplates';
 import { localWorkouts } from './localWorkouts';
 import { enqueueSyncOperation, processSyncQueue, resolveWorkoutId } from './offlineSync';
+import { fromSupabaseWorkoutExerciseRows, normalizeWorkoutExercises, toSupabaseWorkoutExerciseRows } from './workoutExerciseStore';
 import { ensureCurrentSupabaseProfile } from './userService';
 import { hasSupabaseConfig, supabase } from './supabaseClient';
 import { getSessionById, getSessionsAsAchievements, getSessionsAsExerciseLogs, updateSession } from './workoutHistory';
@@ -21,13 +22,14 @@ function parseJsonValue(value, fallback) {
 }
 
 function toSupabaseWorkoutRow(userId, data) {
+  const normalizedExercises = normalizeWorkoutExercises(data.exercises);
   return {
     user_id: userId,
     name: data.name,
     color: data.color || null,
     weekday: data.weekday || null,
     weekdays: Array.isArray(data.weekdays) ? data.weekdays : [],
-    exercises: Array.isArray(data.exercises) ? data.exercises : [],
+    exercises: normalizedExercises,
     sort_order: data.sort_order ?? 0,
     workout_number: data.workout_number ?? null,
   };
@@ -38,7 +40,7 @@ function fromSupabaseWorkoutRow(row) {
   return {
     ...row,
     weekdays: parseJsonValue(row.weekdays, []),
-    exercises: parseJsonValue(row.exercises, []),
+    exercises: normalizeWorkoutExercises(parseJsonValue(row.exercises, [])),
   };
 }
 
@@ -48,7 +50,7 @@ function fromSupabaseTemplateRow(row) {
     ...row,
     category: row.category || '',
     tags: row.tags || '',
-    exercises: parseJsonValue(row.exercises, []),
+    exercises: normalizeWorkoutExercises(parseJsonValue(row.exercises, [])),
   };
 }
 
@@ -133,6 +135,71 @@ async function getSupabaseUserId() {
   return user?.id || null;
 }
 
+async function fetchWorkoutExercisesByWorkoutIds(workoutIds) {
+  if (!Array.isArray(workoutIds) || workoutIds.length === 0 || !supabase) {
+    return new Map();
+  }
+
+  const { data, error } = await supabase
+    .from('workout_exercises')
+    .select('*')
+    .in('workout_id', workoutIds)
+    .order('sort_order', { ascending: true });
+
+  if (error) throw error;
+
+  const grouped = new Map();
+  (Array.isArray(data) ? data : []).forEach((row) => {
+    const current = grouped.get(row.workout_id) || [];
+    current.push(row);
+    grouped.set(row.workout_id, current);
+  });
+  return grouped;
+}
+
+async function replaceSupabaseWorkoutExercises(workoutId, exercises) {
+  if (!supabase || !workoutId) return [];
+
+  const normalizedExercises = normalizeWorkoutExercises(exercises);
+  const { error: deleteError } = await supabase.from('workout_exercises').delete().eq('workout_id', workoutId);
+  if (deleteError) throw deleteError;
+
+  if (normalizedExercises.length === 0) return normalizedExercises;
+
+  const rows = toSupabaseWorkoutExerciseRows(workoutId, normalizedExercises);
+  const { data, error } = await supabase.from('workout_exercises').insert(rows).select('*');
+  if (error) throw error;
+  return fromSupabaseWorkoutExerciseRows(data);
+}
+
+async function migrateLegacyWorkoutExercises(workouts, exerciseRowsByWorkoutId) {
+  if (!Array.isArray(workouts) || workouts.length === 0 || !supabase) return;
+
+  for (const workout of workouts) {
+    const hasNormalizedRows = (exerciseRowsByWorkoutId.get(workout.id) || []).length > 0;
+    const legacyExercises = normalizeWorkoutExercises(workout.exercises);
+    if (hasNormalizedRows || legacyExercises.length === 0) continue;
+
+    try {
+      await replaceSupabaseWorkoutExercises(workout.id, legacyExercises);
+      exerciseRowsByWorkoutId.set(workout.id, toSupabaseWorkoutExerciseRows(workout.id, legacyExercises));
+    } catch (error) {
+      console.error('[workoutDataService] Failed to migrate legacy workout exercises.', workout.id, error);
+    }
+  }
+}
+
+function mergeWorkoutWithExercises(workout, exerciseRowsByWorkoutId) {
+  const exerciseRows = exerciseRowsByWorkoutId.get(workout.id) || [];
+  const normalizedExercises = exerciseRows.length > 0
+    ? fromSupabaseWorkoutExerciseRows(exerciseRows)
+    : normalizeWorkoutExercises(workout.exercises);
+  return {
+    ...workout,
+    exercises: normalizedExercises,
+  };
+}
+
 export async function listWorkouts() {
   try {
     const userId = await getSupabaseUserId();
@@ -144,7 +211,11 @@ export async function listWorkouts() {
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
-      return localWorkouts.mergeWithRemote(normalizeWorkouts((Array.isArray(data) ? data : []).map(fromSupabaseWorkoutRow)));
+      const remoteWorkouts = normalizeWorkouts((Array.isArray(data) ? data : []).map(fromSupabaseWorkoutRow));
+      const exerciseRowsByWorkoutId = await fetchWorkoutExercisesByWorkoutIds(remoteWorkouts.map((workout) => workout.id));
+      await migrateLegacyWorkoutExercises(remoteWorkouts, exerciseRowsByWorkoutId);
+      const hydratedWorkouts = remoteWorkouts.map((workout) => mergeWorkoutWithExercises(workout, exerciseRowsByWorkoutId));
+      return localWorkouts.mergeWithRemote(hydratedWorkouts);
     }
   } catch (_) {}
 
@@ -169,9 +240,12 @@ export async function getWorkoutById(id) {
         .maybeSingle();
 
       if (error) throw error;
-      const remoteWorkout = fromSupabaseWorkoutRow(data);
+      const remoteWorkoutBase = fromSupabaseWorkoutRow(data);
+      if (!remoteWorkoutBase) return localWorkouts.get(id) || null;
+      const exerciseRowsByWorkoutId = await fetchWorkoutExercisesByWorkoutIds([id]);
+      await migrateLegacyWorkoutExercises([remoteWorkoutBase], exerciseRowsByWorkoutId);
+      const remoteWorkout = mergeWorkoutWithExercises(remoteWorkoutBase, exerciseRowsByWorkoutId);
       const localWorkout = localWorkouts.get(id);
-      if (!remoteWorkout) return localWorkout || null;
       if (localWorkout?._pendingRemoteSync) {
         return { ...remoteWorkout, ...localWorkout };
       }
@@ -190,7 +264,9 @@ export async function createWorkout(data) {
       const row = toSupabaseWorkoutRow(userId, data);
       const { data: created, error } = await supabase.from('workouts').insert(row).select().single();
       if (error) throw error;
-      return fromSupabaseWorkoutRow(created);
+      const remoteWorkout = fromSupabaseWorkoutRow(created);
+      const syncedExercises = await replaceSupabaseWorkoutExercises(remoteWorkout.id, data.exercises || []);
+      return { ...remoteWorkout, exercises: syncedExercises };
     }
   } catch (_) {}
 
@@ -226,12 +302,13 @@ export async function updateWorkout(id, data) {
   try {
     const userId = await getSupabaseUserId();
     if (userId && hasSupabaseConfig && supabase) {
+      const nextExercises = data.exercises === undefined ? undefined : normalizeWorkoutExercises(data.exercises);
       const patch = {
         name: data.name,
         color: data.color,
         weekday: data.weekday,
         weekdays: Array.isArray(data.weekdays) ? data.weekdays : data.weekdays === undefined ? undefined : [],
-        exercises: Array.isArray(data.exercises) ? data.exercises : data.exercises === undefined ? undefined : [],
+        exercises: nextExercises,
         sort_order: data.sort_order,
         workout_number: data.workout_number,
       };
@@ -246,7 +323,11 @@ export async function updateWorkout(id, data) {
 
       if (error) throw error;
       localWorkouts.clearRemoteShadow(id);
-      return fromSupabaseWorkoutRow(updated);
+      const remoteWorkout = fromSupabaseWorkoutRow(updated);
+      const syncedExercises = data.exercises === undefined
+        ? remoteWorkout.exercises
+        : await replaceSupabaseWorkoutExercises(id, data.exercises);
+      return { ...remoteWorkout, exercises: syncedExercises };
     }
   } catch (_) {}
 

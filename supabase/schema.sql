@@ -51,6 +51,24 @@ create table if not exists public.workouts (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.workout_exercises (
+  id uuid primary key default gen_random_uuid(),
+  workout_id uuid not null references public.workouts(id) on delete cascade,
+  exercise_index integer,
+  exercise_id text,
+  name text not null,
+  category text,
+  duration integer,
+  use_sets boolean not null default false,
+  sets integer,
+  reps integer,
+  weight_kg numeric,
+  animation_type text,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.workout_templates (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references public.profiles(id) on delete cascade,
@@ -97,6 +115,7 @@ alter table public.profiles enable row level security;
 alter table public.follows enable row level security;
 alter table public.workout_shares enable row level security;
 alter table public.workouts enable row level security;
+alter table public.workout_exercises enable row level security;
 alter table public.workout_templates enable row level security;
 alter table public.achievements enable row level security;
 alter table public.exercise_logs enable row level security;
@@ -166,6 +185,54 @@ create policy "workouts_delete_own"
 on public.workouts
 for delete
 using (auth.uid() = user_id);
+
+create policy "workout_exercises_select_own"
+on public.workout_exercises
+for select
+using (
+  exists (
+    select 1
+    from public.workouts
+    where workouts.id = workout_exercises.workout_id
+      and workouts.user_id = auth.uid()
+  )
+);
+
+create policy "workout_exercises_insert_own"
+on public.workout_exercises
+for insert
+with check (
+  exists (
+    select 1
+    from public.workouts
+    where workouts.id = workout_exercises.workout_id
+      and workouts.user_id = auth.uid()
+  )
+);
+
+create policy "workout_exercises_update_own"
+on public.workout_exercises
+for update
+using (
+  exists (
+    select 1
+    from public.workouts
+    where workouts.id = workout_exercises.workout_id
+      and workouts.user_id = auth.uid()
+  )
+);
+
+create policy "workout_exercises_delete_own"
+on public.workout_exercises
+for delete
+using (
+  exists (
+    select 1
+    from public.workouts
+    where workouts.id = workout_exercises.workout_id
+      and workouts.user_id = auth.uid()
+  )
+);
 
 create policy "workout_templates_select_visible"
 on public.workout_templates
@@ -244,6 +311,7 @@ grant select, insert, update on public.profiles to authenticated;
 grant select, insert, delete on public.follows to authenticated;
 grant select, insert, update on public.workout_shares to authenticated;
 grant select, insert, update, delete on public.workouts to authenticated;
+grant select, insert, update, delete on public.workout_exercises to authenticated;
 grant select on public.workout_templates to authenticated;
 grant select, insert, update on public.achievements to authenticated;
 grant select, insert, update on public.body_weights to authenticated;
@@ -269,3 +337,6 @@ where client_session_id is not null;
 create unique index if not exists exercise_logs_user_client_log_uidx
 on public.exercise_logs (user_id, client_log_id)
 where client_log_id is not null;
+
+create index if not exists workout_exercises_workout_sort_idx
+on public.workout_exercises (workout_id, sort_order);

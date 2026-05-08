@@ -1,3 +1,5 @@
+import { normalizeWorkoutExercises } from './workoutExerciseStore';
+
 /**
  * normalize.js - robuste Normalisierungsfunktionen fuer Daten aus localStorage und APIs.
  * Verhindert typische Typfehler bei Arrays und Strings.
@@ -55,7 +57,7 @@ export function normalizeWorkout(w) {
   if (!w || typeof w !== 'object') return w;
   return {
     ...w,
-    exercises: toArray(w.exercises),
+    exercises: normalizeWorkoutExercises(toArray(w.exercises)),
     weekdays: toArray(w.weekdays),
   };
 }

@@ -7,6 +7,11 @@ Dieses Projekt nutzt ein einfaches, manuell gepflegtes Changelog.
 ### Added
 - `CHANGELOG.md` als uebersichtliche Produkt-Historie eingefuehrt.
 - `docs/sync-strategy.md` fuer die Sync- und Konfliktstrategie angelegt.
+- Neues Datenmodell `workout_exercises` fuer Workout-Uebungen eingefuehrt.
+
+### Changed
+- Workout-Uebungslisten werden jetzt bevorzugt ueber die neue Tabelle `workout_exercises` gelesen und geschrieben.
+- Bestehende JSON-Uebungslisten aus `workouts.exercises` werden bei Bedarf serverseitig in das neue Modell uebernommen.
 
 ## 2026-05-08
 

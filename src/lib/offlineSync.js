@@ -2,6 +2,7 @@ import { getSupabaseAuthUser } from './authClient';
 import { localWorkouts } from './localWorkouts';
 import { queryClientInstance } from './query-client';
 import { hasSupabaseConfig, supabase } from './supabaseClient';
+import { fromSupabaseWorkoutExerciseRows, normalizeWorkoutExercises, toSupabaseWorkoutExerciseRows } from './workoutExerciseStore';
 import { getSessionById, updateSession } from './workoutHistory';
 
 const QUEUE_KEY = 'wb_sync_queue';
@@ -85,13 +86,14 @@ function replaceQueuedWorkoutReferences(queue, oldId, newId) {
 }
 
 function toSupabaseWorkoutRow(userId, data) {
+  const normalizedExercises = normalizeWorkoutExercises(data.exercises);
   return {
     user_id: userId,
     name: data.name,
     color: data.color || null,
     weekday: data.weekday || null,
     weekdays: Array.isArray(data.weekdays) ? data.weekdays : [],
-    exercises: Array.isArray(data.exercises) ? data.exercises : [],
+    exercises: normalizedExercises,
     sort_order: data.sort_order ?? 0,
     workout_number: data.workout_number ?? null,
   };
@@ -102,8 +104,21 @@ function fromSupabaseWorkoutRow(row) {
   return {
     ...row,
     weekdays: Array.isArray(row.weekdays) ? row.weekdays : row.weekdays ? JSON.parse(row.weekdays) : [],
-    exercises: Array.isArray(row.exercises) ? row.exercises : row.exercises ? JSON.parse(row.exercises) : [],
+    exercises: normalizeWorkoutExercises(Array.isArray(row.exercises) ? row.exercises : row.exercises ? JSON.parse(row.exercises) : []),
   };
+}
+
+async function replaceSupabaseWorkoutExercises(workoutId, exercises) {
+  const normalizedExercises = normalizeWorkoutExercises(exercises);
+  const { error: deleteError } = await supabase.from('workout_exercises').delete().eq('workout_id', workoutId);
+  if (deleteError) throw deleteError;
+
+  if (normalizedExercises.length === 0) return normalizedExercises;
+
+  const rows = toSupabaseWorkoutExerciseRows(workoutId, normalizedExercises);
+  const { data, error } = await supabase.from('workout_exercises').insert(rows).select('*');
+  if (error) throw error;
+  return fromSupabaseWorkoutExerciseRows(data);
 }
 
 function mapProfileFieldsToSupabase(fields) {
@@ -258,6 +273,7 @@ async function processWorkoutCreate(userId, queue, operation) {
     };
     const { error } = await supabase.from('workouts').update(patch).eq('id', mappedId).eq('user_id', userId);
     if (error) throw error;
+    await replaceSupabaseWorkoutExercises(mappedId, data.exercises || []);
     return queue;
   }
 
@@ -270,8 +286,9 @@ async function processWorkoutCreate(userId, queue, operation) {
   if (error) throw error;
 
   const remoteWorkout = fromSupabaseWorkoutRow(created);
+  const syncedExercises = await replaceSupabaseWorkoutExercises(remoteWorkout.id, data.exercises || []);
   setWorkoutIdMapping(localId, remoteWorkout.id);
-  localWorkouts.replaceId(localId, remoteWorkout);
+  localWorkouts.replaceId(localId, { ...remoteWorkout, exercises: syncedExercises });
   return replaceQueuedWorkoutReferences(queue, localId, remoteWorkout.id);
 }
 
@@ -286,7 +303,7 @@ async function processWorkoutUpdate(userId, payload) {
     color: payload.data.color,
     weekday: payload.data.weekday,
     weekdays: Array.isArray(payload.data.weekdays) ? payload.data.weekdays : payload.data.weekdays === undefined ? undefined : [],
-    exercises: Array.isArray(payload.data.exercises) ? payload.data.exercises : payload.data.exercises === undefined ? undefined : [],
+    exercises: payload.data.exercises === undefined ? undefined : normalizeWorkoutExercises(payload.data.exercises),
     sort_order: payload.data.sort_order,
     workout_number: payload.data.workout_number,
   };
@@ -301,9 +318,15 @@ async function processWorkoutUpdate(userId, payload) {
     .single();
 
   if (error) throw error;
+  if (payload.data.exercises !== undefined) {
+    await replaceSupabaseWorkoutExercises(workoutId, payload.data.exercises);
+  }
   localWorkouts.clearRemoteShadow(payload.workoutId);
   if (payload.workoutId !== workoutId) {
-    localWorkouts.replaceId(payload.workoutId, fromSupabaseWorkoutRow(updated));
+    const nextExercises = payload.data.exercises === undefined
+      ? fromSupabaseWorkoutRow(updated).exercises
+      : normalizeWorkoutExercises(payload.data.exercises);
+    localWorkouts.replaceId(payload.workoutId, { ...fromSupabaseWorkoutRow(updated), exercises: nextExercises });
   }
 }
 

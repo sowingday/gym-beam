@@ -55,6 +55,10 @@ Dann konkurrieren zwei komplette Listen miteinander, obwohl fachlich nur zwei kl
 
 ## Mittelfristiger Zielzustand
 
+Status: begonnen
+
+Das neue Datenmodell `workout_exercises` ist bereits eingefuehrt. Die App liest und schreibt Workout-Uebungen jetzt bevorzugt ueber diese Tabelle. Bestehende JSON-Daten in `workouts.exercises` dienen voruebergehend noch als Rueckfall- und Migrationsquelle.
+
 Die Workout-Uebungen sollen in eine eigene Tabelle ausgelagert werden, z. B. `workout_exercises`.
 
 Beispielhafte Felder:
@@ -82,6 +86,17 @@ Vorteile:
 2. Vorhandene JSON-Uebungslisten migrieren.
 3. App-Lese- und Schreibpfade fuer Workouts auf die neue Tabelle umstellen.
 4. Erst danach die alte JSON-Speicherung in `workouts.exercises` schrittweise abbauen.
+
+## Aktueller Migrationsmodus
+
+- Dual-Write:
+  - Workout-Metadaten bleiben in `workouts`
+  - Uebungslisten werden zusaetzlich in `workout_exercises` gespeichert
+- Read-Preference:
+  - Wenn `workout_exercises` vorhanden sind, werden diese verwendet
+  - Sonst faellt die App auf `workouts.exercises` zurueck
+- Lazy Migration:
+  - Wenn fuer ein Workout noch keine `workout_exercises` existieren, aber JSON-Uebungen vorhanden sind, uebernimmt die App diese in das neue Modell
 
 ## Nicht-Ziele im aktuellen Stand
 
