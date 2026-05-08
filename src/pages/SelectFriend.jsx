@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useQueryClient } from '@tanstack/react-query';
 import { useI18n } from '../lib/i18n';
-import { followUser, unfollowUser } from '../lib/socialService';
+import { followUser, isSocialAvailable, unfollowUser } from '../lib/socialService';
 import { listDirectoryProfiles } from '../lib/profileDirectory';
 
 export default function SelectFriend({ mode, me, follows, onBack }) {
@@ -12,6 +12,7 @@ export default function SelectFriend({ mode, me, follows, onBack }) {
   const { t, language } = useI18n();
   const [search, setSearch] = useState('');
   const [allUsers, setAllUsers] = useState([]);
+  const socialAvailable = isSocialAvailable();
 
   useEffect(() => {
     listDirectoryProfiles(me).then((users) => {
@@ -29,6 +30,7 @@ export default function SelectFriend({ mode, me, follows, onBack }) {
   const isFollowing = (userId) => myFollowingIds.has(userId);
 
   const handleToggle = async (user) => {
+    if (!socialAvailable) return;
     const existing = safeFollows.find((follow) => follow.follower_id === me.id && follow.following_id === user.id);
     if (existing) await unfollowUser(existing.id);
     else {
@@ -58,6 +60,14 @@ export default function SelectFriend({ mode, me, follows, onBack }) {
             : (language === 'en' ? 'Search users' : 'Benutzer suchen')}
         </h1>
 
+        {!socialAvailable ? (
+          <p className="text-xs text-muted-foreground font-body mb-4 p-3 rounded-lg bg-muted/40 border border-border">
+            {language === 'en'
+              ? 'Following and unfollowing only work online.'
+              : 'Folgen und Entfolgen funktionieren nur online.'}
+          </p>
+        ) : null}
+
         {mode === 'contacts' ? (
           <p className="text-xs text-muted-foreground font-body mb-4 p-3 rounded-lg bg-muted/40 border border-border">
             {language === 'en'
@@ -68,7 +78,7 @@ export default function SelectFriend({ mode, me, follows, onBack }) {
 
         <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input autoFocus value={search} onChange={(e) => setSearch(e.target.value)} placeholder={language === 'en' ? 'Search username...' : 'Benutzername suchen...'} className="pl-9 font-body" />
+          <Input autoFocus value={search} onChange={(e) => setSearch(e.target.value)} placeholder={language === 'en' ? 'Search username...' : 'Benutzername suchen...'} className="pl-9 font-body" disabled={!socialAvailable} />
         </div>
 
         <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
@@ -87,7 +97,7 @@ export default function SelectFriend({ mode, me, follows, onBack }) {
                       {language === 'en' ? 'follows you' : 'folgt Dir'}
                     </span>
                   ) : null}
-                  <Button variant={isFollowing(user.id) ? 'secondary' : 'default'} size="sm" className="font-body text-xs h-7" onClick={() => handleToggle(user)}>
+                  <Button variant={isFollowing(user.id) ? 'secondary' : 'default'} size="sm" className="font-body text-xs h-7" onClick={() => handleToggle(user)} disabled={!socialAvailable}>
                     {isFollowing(user.id) ? (language === 'en' ? 'Unfollow' : 'Entfolgen') : (language === 'en' ? 'Follow' : 'Folgen')}
                   </Button>
                 </div>

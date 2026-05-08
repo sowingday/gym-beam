@@ -455,32 +455,35 @@ export async function recordCompletedWorkout({ workoutId, workoutColor, exercise
   try {
     const userId = await getSupabaseUserId();
     if (userId && hasSupabaseConfig && supabase) {
-      const { error: achievementError } = await supabase.from('achievements').insert({
+      const { error: achievementError } = await supabase.from('achievements').upsert({
         user_id: userId,
         date,
         exercise_count: exerciseCount,
         training_duration: duration,
         workout_id: normalizedWorkoutId,
         workout_color: workoutColor || '#212121',
-      });
+        client_session_id: sessionId,
+      }, { onConflict: 'user_id,client_session_id' });
 
       if (achievementError) throw achievementError;
 
-      for (const exercise of exercises) {
+      for (let index = 0; index < exercises.length; index += 1) {
+        const exercise = exercises[index];
         const payload = {
           exercise_name: exercise.exercise_name,
           weight_kg: exercise.weight_kg ?? null,
           reps: exercise.reps ?? null,
           duration: exercise.duration ?? null,
-          exercise_index: exercise.exercise_index ?? null,
+          exercise_index: exercise.exercise_index ?? index,
         };
 
-        const { error } = await supabase.from('exercise_logs').insert({
+        const { error } = await supabase.from('exercise_logs').upsert({
           user_id: userId,
           workout_id: normalizedWorkoutId,
           date,
+          client_log_id: sessionId ? `${sessionId}:${index}` : null,
           payload,
-        });
+        }, { onConflict: 'user_id,client_log_id' });
 
         if (error) throw error;
       }

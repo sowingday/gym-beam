@@ -1,6 +1,10 @@
 import { ensureCurrentSupabaseProfile } from './userService';
 import { hasSupabaseConfig, supabase } from './supabaseClient';
 
+export function isSocialAvailable() {
+  return Boolean(hasSupabaseConfig && supabase && navigator.onLine);
+}
+
 function normalizeFollowRecord(record) {
   if (!record) return null;
   return {
@@ -25,6 +29,7 @@ function normalizeWorkoutShare(record) {
 }
 
 export async function fetchFollows() {
+  if (!isSocialAvailable()) return [];
   try {
     const supabaseUser = await ensureCurrentSupabaseProfile();
     if (supabaseUser && hasSupabaseConfig && supabase) {
@@ -43,6 +48,7 @@ export async function fetchFollows() {
 }
 
 export async function followUser({ followerId, followerName, followerEmail, followingId, followingName, followingEmail }) {
+  if (!isSocialAvailable()) return false;
   try {
     const supabaseUser = await ensureCurrentSupabaseProfile();
     if (supabaseUser && hasSupabaseConfig && supabase) {
@@ -65,6 +71,7 @@ export async function followUser({ followerId, followerName, followerEmail, foll
 }
 
 export async function unfollowUser(followId) {
+  if (!isSocialAvailable()) return false;
   try {
     const supabaseUser = await ensureCurrentSupabaseProfile();
     if (supabaseUser && hasSupabaseConfig && supabase) {
@@ -100,6 +107,7 @@ export function deriveFriends(allFollows, me) {
 }
 
 export async function fetchInboxMessages(userId) {
+  if (!isSocialAvailable()) return [];
   try {
     const supabaseUser = await ensureCurrentSupabaseProfile();
     if (supabaseUser && hasSupabaseConfig && supabase) {
@@ -118,6 +126,7 @@ export async function fetchInboxMessages(userId) {
 }
 
 export async function sendWorkoutShare({ senderId, senderName, recipientId, recipientName, workout }) {
+  if (!isSocialAvailable()) return false;
   const payload = {
     sender_id: senderId,
     sender_name: senderName,
@@ -145,6 +154,7 @@ export async function sendWorkoutShare({ senderId, senderName, recipientId, reci
 }
 
 export async function sendInboxShare({ senderId, senderName, recipientId, recipientName, title, payload }) {
+  if (!isSocialAvailable()) return false;
   const record = {
     sender_id: senderId,
     sender_name: senderName,
@@ -168,6 +178,7 @@ export async function sendInboxShare({ senderId, senderName, recipientId, recipi
 }
 
 export async function markMessageRead(messageId) {
+  if (!isSocialAvailable()) return false;
   try {
     const supabaseUser = await ensureCurrentSupabaseProfile();
     if (supabaseUser && hasSupabaseConfig && supabase) {

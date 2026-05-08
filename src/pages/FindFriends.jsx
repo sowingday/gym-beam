@@ -7,7 +7,7 @@ import SelectFriend from './SelectFriend';
 import { useI18n } from '../lib/i18n';
 import { getCurrentAuthUser } from '../lib/authClient';
 import { shareText } from '../lib/shareService';
-import { fetchFollows, followUser, unfollowUser } from '../lib/socialService';
+import { fetchFollows, followUser, isSocialAvailable, unfollowUser } from '../lib/socialService';
 
 export default function FindFriends() {
   const navigate = useNavigate();
@@ -15,6 +15,7 @@ export default function FindFriends() {
   const [me, setMe] = useState(null);
   const [selectMode, setSelectMode] = useState(null);
   const shareBaseUrl = window.location.origin;
+  const socialAvailable = isSocialAvailable();
 
   useEffect(() => {
     getCurrentAuthUser().then(setMe).catch(() => {});
@@ -48,7 +49,7 @@ export default function FindFriends() {
   };
 
   const handleFollowToggle = async (targetName, targetEmail) => {
-    if (!me) return;
+    if (!me || !socialAvailable) return;
     const target = uniqueFoF.find((person) => person.name === targetName && person.email === targetEmail);
     const existing = follows.find((follow) => follow.follower_id === me.id && follow.following_id === target?.id);
     if (existing) await unfollowUser(existing.id);
@@ -81,13 +82,21 @@ export default function FindFriends() {
 
         <h1 className="font-display text-4xl tracking-wide text-foreground mb-6">{language === 'en' ? 'Find your friends' : 'Finde Deine Freunde'}</h1>
 
+        {!socialAvailable ? (
+          <div className="mb-6 rounded-lg border border-border bg-card/60 px-4 py-3 text-sm text-muted-foreground font-body">
+            {language === 'en'
+              ? 'Friend search and follow actions are only available online.'
+              : 'Freundesuche und Follow-Aktionen sind nur online verfuegbar.'}
+          </div>
+        ) : null}
+
         <div className="space-y-3 mb-8">
-          <Button variant="outline" className="w-full justify-start gap-3 h-12 font-body text-base" onClick={() => setSelectMode('all')}>
+          <Button variant="outline" className="w-full justify-start gap-3 h-12 font-body text-base" onClick={() => setSelectMode('all')} disabled={!socialAvailable}>
             <Search className="w-5 h-5" />
             {language === 'en' ? 'Search usernames' : 'Benutzernamen suchen'}
           </Button>
 
-          <Button variant="outline" className="w-full justify-start gap-3 h-12 font-body text-base" onClick={() => setSelectMode('contacts')}>
+          <Button variant="outline" className="w-full justify-start gap-3 h-12 font-body text-base" onClick={() => setSelectMode('contacts')} disabled={!socialAvailable}>
             <Search className="w-5 h-5" />
             {language === 'en' ? 'Find in contacts' : 'In Kontakten finden'}
           </Button>
@@ -114,7 +123,7 @@ export default function FindFriends() {
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     {followsMe(person.id) ? <span className="text-xs text-accent font-body">{language === 'en' ? 'follows you' : 'folgt Dir'}</span> : null}
-                    <Button variant={isFollowing(person.id) ? 'secondary' : 'default'} size="sm" className="font-body text-xs h-7" onClick={() => handleFollowToggle(person.name, person.email)}>
+                    <Button variant={isFollowing(person.id) ? 'secondary' : 'default'} size="sm" className="font-body text-xs h-7" onClick={() => handleFollowToggle(person.name, person.email)} disabled={!socialAvailable}>
                       {isFollowing(person.id) ? (language === 'en' ? 'Unfollow' : 'Entfolgen') : (language === 'en' ? 'Follow' : 'Folgen')}
                     </Button>
                   </div>

@@ -63,11 +63,24 @@ create table if not exists public.workout_templates (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.achievements (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  date date not null,
+  exercise_count integer not null default 0,
+  training_duration integer not null default 0,
+  workout_id uuid references public.workouts(id) on delete set null,
+  workout_color text,
+  client_session_id text,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists public.exercise_logs (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles(id) on delete cascade,
   workout_id uuid references public.workouts(id) on delete set null,
   date date not null,
+  client_log_id text,
   payload jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
 );
@@ -85,6 +98,7 @@ alter table public.follows enable row level security;
 alter table public.workout_shares enable row level security;
 alter table public.workouts enable row level security;
 alter table public.workout_templates enable row level security;
+alter table public.achievements enable row level security;
 alter table public.exercise_logs enable row level security;
 alter table public.body_weights enable row level security;
 
@@ -173,6 +187,26 @@ on public.workout_templates
 for delete
 using (auth.uid() = user_id);
 
+create policy "achievements_select_own"
+on public.achievements
+for select
+using (auth.uid() = user_id);
+
+create policy "achievements_insert_own"
+on public.achievements
+for insert
+with check (auth.uid() = user_id);
+
+create policy "achievements_update_own"
+on public.achievements
+for update
+using (auth.uid() = user_id);
+
+create policy "achievements_delete_own"
+on public.achievements
+for delete
+using (auth.uid() = user_id);
+
 create policy "exercise_logs_select_own"
 on public.exercise_logs
 for select
@@ -211,9 +245,9 @@ grant select, insert, delete on public.follows to authenticated;
 grant select, insert, update on public.workout_shares to authenticated;
 grant select, insert, update, delete on public.workouts to authenticated;
 grant select on public.workout_templates to authenticated;
-grant select, insert on public.achievements to authenticated;
+grant select, insert, update on public.achievements to authenticated;
 grant select, insert, update on public.body_weights to authenticated;
-grant select, insert on public.exercise_logs to authenticated;
+grant select, insert, update on public.exercise_logs to authenticated;
 
 create policy "body_weights_update_own"
 on public.body_weights
@@ -224,3 +258,14 @@ create policy "body_weights_delete_own"
 on public.body_weights
 for delete
 using (auth.uid() = user_id);
+
+alter table public.achievements add column if not exists client_session_id text;
+alter table public.exercise_logs add column if not exists client_log_id text;
+
+create unique index if not exists achievements_user_client_session_uidx
+on public.achievements (user_id, client_session_id)
+where client_session_id is not null;
+
+create unique index if not exists exercise_logs_user_client_log_uidx
+on public.exercise_logs (user_id, client_log_id)
+where client_log_id is not null;

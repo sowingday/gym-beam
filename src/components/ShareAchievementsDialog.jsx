@@ -4,7 +4,7 @@ import { X, Share2, Search, Check, ExternalLink, Users } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { deriveFriends, fetchFollows, sendInboxShare } from '../lib/socialService';
+import { deriveFriends, fetchFollows, isSocialAvailable, sendInboxShare } from '../lib/socialService';
 import { shareText } from '../lib/shareService';
 import { useI18n } from '../lib/i18n';
 import { getCurrentAuthUser } from '../lib/authClient';
@@ -14,7 +14,8 @@ export default function ShareAchievementsDialog({ period, initialTab = 'extern',
   const [query, setQuery] = useState('');
   const [sending, setSending] = useState(null);
   const [sent, setSent] = useState(null);
-  const [tab, setTab] = useState(initialTab);
+  const socialAvailable = isSocialAvailable();
+  const [tab, setTab] = useState(initialTab === 'freunde' && !socialAvailable ? 'extern' : initialTab);
 
   const labels = {
     de: { week: 'Diese Woche', month: 'Diesen Monat', year: 'Dieses Jahr', all: 'Alles' },
@@ -41,7 +42,7 @@ export default function ShareAchievementsDialog({ period, initialTab = 'extern',
   };
 
   const handleShareToFriend = async (friend) => {
-    if (!me) return;
+    if (!me || !socialAvailable) return;
     setSending(friend.id);
     try {
       const text = buildShareText(period);
@@ -85,8 +86,9 @@ export default function ShareAchievementsDialog({ period, initialTab = 'extern',
             <ExternalLink className="w-3 h-3" /> {language === 'en' ? 'External' : 'Extern'}
           </button>
           <button
-            onClick={() => setTab('freunde')}
-            className={`flex-1 py-1.5 text-xs font-body flex items-center justify-center gap-1 transition-colors ${tab === 'freunde' ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted/50'}`}
+            onClick={() => socialAvailable && setTab('freunde')}
+            disabled={!socialAvailable}
+            className={`flex-1 py-1.5 text-xs font-body flex items-center justify-center gap-1 transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${tab === 'freunde' ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted/50'}`}
           >
             <Users className="w-3 h-3" /> {language === 'en' ? `Friends (${friends.length})` : `Freunde (${friends.length})`}
           </button>
@@ -106,7 +108,13 @@ export default function ShareAchievementsDialog({ period, initialTab = 'extern',
           </div>
         ) : (
           <>
-            {friends.length === 0 ? (
+            {!socialAvailable ? (
+              <p className="text-xs text-muted-foreground text-center py-4 font-body">
+                {language === 'en'
+                  ? 'Sharing to friends is only available online.'
+                  : 'Das Teilen mit Freunden ist nur online verfuegbar.'}
+              </p>
+            ) : friends.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-4 font-body">
                 {language === 'en'
                   ? 'No mutual contacts yet. When someone follows you and you follow back, they appear here.'
@@ -129,7 +137,7 @@ export default function ShareAchievementsDialog({ period, initialTab = 'extern',
                       <span className="text-sm font-body text-foreground truncate">{friend.name}</span>
                       <button
                         onClick={() => handleShareToFriend(friend)}
-                        disabled={sending === friend.id || sent === friend.id}
+                        disabled={!socialAvailable || sending === friend.id || sent === friend.id}
                         className={`ml-2 shrink-0 px-3 py-1 rounded-full text-xs font-semibold font-body transition-colors ${sent === friend.id ? 'bg-primary/10 text-primary' : 'bg-primary text-primary-foreground hover:bg-primary/90'}`}
                       >
                         {sent === friend.id ? <Check className="w-3 h-3 inline" /> : (language === 'en' ? 'Send' : 'Senden')}

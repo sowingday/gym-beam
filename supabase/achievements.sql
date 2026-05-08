@@ -6,6 +6,7 @@ create table if not exists public.achievements (
   training_duration integer not null default 0,
   workout_id uuid references public.workouts(id) on delete set null,
   workout_color text,
+  client_session_id text,
   created_at timestamptz not null default now()
 );
 
@@ -30,3 +31,9 @@ create policy "achievements_delete_own"
 on public.achievements
 for delete
 using (auth.uid() = user_id);
+
+alter table public.achievements add column if not exists client_session_id text;
+
+create unique index if not exists achievements_user_client_session_uidx
+on public.achievements (user_id, client_session_id)
+where client_session_id is not null;
