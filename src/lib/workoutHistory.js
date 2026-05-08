@@ -49,6 +49,7 @@ export function saveWorkoutSession(session) {
     ...session,
     id: session.id || generateId(),
     completed_at: session.completed_at || new Date().toISOString(),
+    sync_status: session.sync_status || 'pending',
   };
   sessions.push(entry);
   save(sessions);
@@ -60,6 +61,19 @@ export function saveWorkoutSession(session) {
  */
 export function getAllSessions() {
   return load().sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at));
+}
+
+export function getSessionById(id) {
+  return load().find((session) => session.id === id) || null;
+}
+
+export function updateSession(id, patch) {
+  const sessions = load();
+  const index = sessions.findIndex((session) => session.id === id);
+  if (index === -1) return null;
+  sessions[index] = { ...sessions[index], ...patch };
+  save(sessions);
+  return sessions[index];
 }
 
 /**

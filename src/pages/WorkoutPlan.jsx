@@ -210,12 +210,7 @@ export default function WorkoutPlan() {
     }
 
     const newDays = [...currentDays, existingSheet.day];
-    if (workout.id.startsWith('local_')) {
-      localWorkouts.update(workout.id, { weekdays: newDays });
-      queryClient.invalidateQueries({ queryKey: ['workouts'] });
-    } else {
-      updateMutation.mutate({ id: workout.id, data: { weekdays: newDays } });
-    }
+    updateMutation.mutate({ id: workout.id, data: { weekdays: newDays } });
     setExistingSheet(null);
   };
 

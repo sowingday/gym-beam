@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { getSupabaseAuthUser } from './authClient';
+import { processSyncQueue } from './offlineSync';
 import { hasSupabaseConfig, supabase } from './supabaseClient';
 
 const AuthContext = createContext();
@@ -21,6 +22,7 @@ export const AuthProvider = ({ children }) => {
       if (currentUser) {
         const { ensureCurrentSupabaseProfile } = await import('./userService');
         await ensureCurrentSupabaseProfile();
+        await processSyncQueue();
       }
       setUser(currentUser);
       setIsAuthenticated(Boolean(currentUser));
@@ -81,6 +83,7 @@ export const AuthProvider = ({ children }) => {
       if (normalizedUser) {
         const { ensureCurrentSupabaseProfile } = await import('./userService');
         await ensureCurrentSupabaseProfile();
+        await processSyncQueue();
       }
       setUser(normalizedUser);
       setIsAuthenticated(Boolean(normalizedUser));
@@ -91,6 +94,14 @@ export const AuthProvider = ({ children }) => {
     });
 
     return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const handleOnline = () => {
+      processSyncQueue().catch(() => {});
+    };
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
   }, []);
 
   const signInWithPassword = async (email, password) => {

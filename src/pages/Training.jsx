@@ -195,7 +195,7 @@ export default function Training() {
     const count = completedCountRef.current;
     const duration = TOTAL_DIR === 'up' ? elapsedTotal : completedDurationRef.current;
 
-    saveWorkoutSession({
+    const savedSession = saveWorkoutSession({
       workout_id: id,
       workout_name: workout?.name || '',
       workout_color: workout?.color || '#212121',
@@ -217,6 +217,7 @@ export default function Training() {
         exerciseCount: count,
         duration,
         exercises: completedExercisesRef.current,
+        sessionId: savedSession.id,
       });
     }
   }, [TOTAL_DIR, elapsedTotal, id, workout]);

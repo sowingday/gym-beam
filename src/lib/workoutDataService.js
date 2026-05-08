@@ -1,9 +1,10 @@
 import { normalizeTemplates, normalizeWorkouts } from './normalize';
 import { LOCAL_TEMPLATES } from './localTemplates';
 import { localWorkouts } from './localWorkouts';
+import { enqueueSyncOperation, processSyncQueue, resolveWorkoutId } from './offlineSync';
 import { ensureCurrentSupabaseProfile } from './userService';
 import { hasSupabaseConfig, supabase } from './supabaseClient';
-import { getSessionsAsAchievements, getSessionsAsExerciseLogs } from './workoutHistory';
+import { getSessionById, getSessionsAsAchievements, getSessionsAsExerciseLogs, updateSession } from './workoutHistory';
 
 const LOCAL_BODY_WEIGHTS_KEY = 'wb_local_body_weights';
 
@@ -151,6 +152,10 @@ export async function listWorkouts() {
 }
 
 export async function getWorkoutById(id) {
+  const mappedId = resolveWorkoutId(id);
+  if (mappedId && mappedId !== id && String(id).startsWith('local_')) {
+    id = mappedId;
+  }
   if (id?.startsWith('local_')) return localWorkouts.get(id) || null;
 
   try {
@@ -189,11 +194,34 @@ export async function createWorkout(data) {
     }
   } catch (_) {}
 
-  return localWorkouts.create(data);
+  const localWorkout = localWorkouts.create({ ...data, _pendingRemoteSync: true });
+  enqueueSyncOperation('workout_create', {
+    localId: localWorkout.id,
+    data: {
+      name: localWorkout.name,
+      color: localWorkout.color,
+      weekday: localWorkout.weekday,
+      weekdays: localWorkout.weekdays,
+      exercises: localWorkout.exercises,
+      sort_order: localWorkout.sort_order,
+      workout_number: localWorkout.workout_number,
+    },
+  });
+  processSyncQueue().catch(() => {});
+  return localWorkout;
 }
 
 export async function updateWorkout(id, data) {
-  if (id?.startsWith('local_')) return localWorkouts.update(id, data);
+  const mappedId = resolveWorkoutId(id);
+  if (String(id).startsWith('local_') && mappedId === id) {
+    const updatedLocalWorkout = localWorkouts.update(id, { ...data, _pendingRemoteSync: true });
+    enqueueSyncOperation('workout_update', { workoutId: id, data });
+    processSyncQueue().catch(() => {});
+    return updatedLocalWorkout;
+  }
+  if (mappedId && mappedId !== id) {
+    id = mappedId;
+  }
 
   try {
     const userId = await getSupabaseUserId();
@@ -222,11 +250,22 @@ export async function updateWorkout(id, data) {
     }
   } catch (_) {}
 
-  return localWorkouts.update(id, data);
+  const pendingWorkout = localWorkouts.update(id, { ...data, _pendingRemoteSync: true });
+  enqueueSyncOperation('workout_update', { workoutId: id, data });
+  processSyncQueue().catch(() => {});
+  return pendingWorkout;
 }
 
 export async function deleteWorkout(id) {
-  if (id?.startsWith('local_')) return localWorkouts.delete(id);
+  const mappedId = resolveWorkoutId(id);
+  if (String(id).startsWith('local_') && mappedId === id) {
+    localWorkouts.delete(id);
+    enqueueSyncOperation('workout_delete', { workoutId: id });
+    return true;
+  }
+  if (mappedId && mappedId !== id) {
+    id = mappedId;
+  }
 
   try {
     const userId = await getSupabaseUserId();
@@ -238,7 +277,10 @@ export async function deleteWorkout(id) {
     }
   } catch (_) {}
 
-  return localWorkouts.delete(id);
+  localWorkouts.delete(id, { pendingRemoteSync: true });
+  enqueueSyncOperation('workout_delete', { workoutId: id });
+  processSyncQueue().catch(() => {});
+  return true;
 }
 
 export async function listWorkoutTemplates() {
@@ -378,6 +420,8 @@ export async function upsertBodyWeightForDate(date, weightKg) {
     console.error('[workoutDataService] Failed to sync body weight entry.', error);
   }
 
+  enqueueSyncOperation('body_weight_upsert', { date, weightKg: normalizedWeight });
+  processSyncQueue().catch(() => {});
   return false;
 }
 
@@ -402,8 +446,11 @@ export async function listExerciseLogs() {
   return [];
 }
 
-export async function recordCompletedWorkout({ workoutId, workoutColor, exerciseCount, duration, exercises }) {
-  const date = new Date().toISOString().split('T')[0];
+export async function recordCompletedWorkout({ workoutId, workoutColor, exerciseCount, duration, exercises, sessionId = null }) {
+  const session = sessionId ? getSessionById(sessionId) : null;
+  const date = session?.completed_at ? session.completed_at.split('T')[0] : new Date().toISOString().split('T')[0];
+  const resolvedWorkoutId = resolveWorkoutId(workoutId);
+  const normalizedWorkoutId = resolvedWorkoutId && !String(resolvedWorkoutId).startsWith('local_') ? resolvedWorkoutId : null;
 
   try {
     const userId = await getSupabaseUserId();
@@ -413,7 +460,7 @@ export async function recordCompletedWorkout({ workoutId, workoutColor, exercise
         date,
         exercise_count: exerciseCount,
         training_duration: duration,
-        workout_id: workoutId,
+        workout_id: normalizedWorkoutId,
         workout_color: workoutColor || '#212121',
       });
 
@@ -430,16 +477,31 @@ export async function recordCompletedWorkout({ workoutId, workoutColor, exercise
 
         const { error } = await supabase.from('exercise_logs').insert({
           user_id: userId,
-          workout_id: workoutId,
+          workout_id: normalizedWorkoutId,
           date,
           payload,
         });
 
         if (error) throw error;
       }
+      if (sessionId) {
+        updateSession(sessionId, {
+          sync_status: 'synced',
+          synced_at: new Date().toISOString(),
+        });
+      }
       return true;
     }
-  } catch (_) {}
+  } catch (error) {
+    console.error('[workoutDataService] Failed to record completed workout remotely.', error);
+  }
 
+  if (sessionId) {
+    enqueueSyncOperation('workout_session_record', {
+      sessionId,
+      workoutId,
+    });
+    processSyncQueue().catch(() => {});
+  }
   return false;
 }

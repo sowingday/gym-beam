@@ -8,6 +8,7 @@
  */
 
 import { getCurrentAuthUser, getSupabaseAuthUser } from './authClient';
+import { enqueueSyncOperation, processSyncQueue } from './offlineSync';
 import { profileNameExists } from './profileDirectory';
 import { hasSupabaseConfig, supabase } from './supabaseClient';
 
@@ -320,12 +321,15 @@ export async function saveProfile(_legacyArg, fields) {
     if (supabaseUser) {
       await ensureSupabaseProfile(supabaseUser, local);
       await upsertSupabaseProfile(supabaseUser, fields, local);
+      await processSyncQueue().catch(() => {});
       return { ok: true, source: 'supabase' };
     }
   } catch (error) {
     console.error('[userService] Failed to save profile to Supabase.', error);
   }
 
+  enqueueSyncOperation('profile_upsert', fields);
+  processSyncQueue().catch(() => {});
   return { ok: true, source: 'local' };
 }
 

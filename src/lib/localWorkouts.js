@@ -28,7 +28,7 @@ function generateId() {
 
 export const localWorkouts = {
   list() {
-    return load().sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+    return load().filter((workout) => !workout?._deleted).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
   },
 
   mergeWithRemote(remoteWorkouts) {
@@ -38,6 +38,7 @@ export const localWorkouts = {
     const remoteIds = new Set(remote.map((workout) => workout.id));
     const merged = remote.map((workout) => {
       const localOverride = localById.get(workout.id);
+      if (localOverride?._deleted) return null;
       if (localOverride?._pendingRemoteSync) {
         return { ...workout, ...localOverride };
       }
@@ -48,7 +49,8 @@ export const localWorkouts = {
       save(retainedLocal);
     }
     const localOnly = retainedLocal.filter((workout) => !remoteIds.has(workout.id));
-    return [...merged, ...localOnly].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+    return [...merged.filter(Boolean), ...localOnly.filter((workout) => !workout?._deleted)]
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
   },
 
   create(data) {
@@ -90,8 +92,26 @@ export const localWorkouts = {
     return workouts[index];
   },
 
-  delete(id) {
-    save(load().filter(w => w.id !== id));
+  delete(id, options = {}) {
+    const workouts = load();
+    const index = workouts.findIndex((workout) => workout.id === id);
+    if (options.pendingRemoteSync && index === -1) {
+      workouts.push({ id, _deleted: true, _pendingRemoteSync: true, updated_date: new Date().toISOString() });
+      save(workouts);
+      return true;
+    }
+    if (options.pendingRemoteSync && index >= 0 && !String(id).startsWith('local_')) {
+      workouts[index] = {
+        ...workouts[index],
+        _deleted: true,
+        _pendingRemoteSync: true,
+        updated_date: new Date().toISOString(),
+      };
+      save(workouts);
+      return true;
+    }
+    save(workouts.filter((workout) => workout.id !== id));
+    return true;
   },
 
   clearRemoteShadow(id) {
@@ -99,7 +119,18 @@ export const localWorkouts = {
     save(load().filter((workout) => workout.id !== id));
   },
 
+  replaceId(oldId, nextWorkout) {
+    const workouts = load();
+    const remaining = workouts.filter((workout) => workout.id !== oldId && workout.id !== nextWorkout?.id);
+    if (nextWorkout) {
+      remaining.push(nextWorkout);
+    }
+    save(remaining);
+    return nextWorkout || null;
+  },
+
   get(id) {
-    return load().find(w => w.id === id) || null;
+    const workout = load().find((entry) => entry.id === id) || null;
+    return workout?._deleted ? null : workout;
   },
 };
