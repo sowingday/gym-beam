@@ -13,9 +13,10 @@ export default function ExerciseDatabase() {
   const { language, t } = useI18n();
   const [, forceUpdate] = useState(0);
 
-  const { data: exercises = [], isLoading } = useQuery({
+  const { data: exercises = [], isLoading, error } = useQuery({
     queryKey: ['exercises', language],
     queryFn: async () => getLocalExercises(language),
+    retry: false,
   });
 
   const handleSelect = (exercise) => {
@@ -33,6 +34,20 @@ export default function ExerciseDatabase() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background pb-24">
+        <div className="max-w-2xl mx-auto px-4 py-6">
+          <div className="text-center py-12">
+            <p className="text-muted-foreground font-body mb-2">{t('common.loadingExerciseDb')}</p>
+            <p className="text-sm text-destructive font-body">Die Übungsdatenbank konnte lokal nicht geladen werden.</p>
+          </div>
+        </div>
+        <BottomNav />
       </div>
     );
   }

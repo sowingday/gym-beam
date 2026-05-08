@@ -203,6 +203,18 @@ on public.body_weights
 for insert
 with check (auth.uid() = user_id);
 
+grant usage on schema public to authenticated;
+grant usage on schema public to anon;
+
+grant select, insert, update on public.profiles to authenticated;
+grant select, insert, delete on public.follows to authenticated;
+grant select, insert, update on public.workout_shares to authenticated;
+grant select, insert, update, delete on public.workouts to authenticated;
+grant select on public.workout_templates to authenticated;
+grant select, insert on public.achievements to authenticated;
+grant select, insert, update on public.body_weights to authenticated;
+grant select, insert on public.exercise_logs to authenticated;
+
 create policy "body_weights_update_own"
 on public.body_weights
 for update

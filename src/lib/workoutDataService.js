@@ -1,9 +1,11 @@
 import { normalizeTemplates, normalizeWorkouts } from './normalize';
 import { LOCAL_TEMPLATES } from './localTemplates';
 import { localWorkouts } from './localWorkouts';
-import { getSupabaseAuthUser } from './authClient';
+import { ensureCurrentSupabaseProfile } from './userService';
 import { hasSupabaseConfig, supabase } from './supabaseClient';
 import { getSessionsAsAchievements, getSessionsAsExerciseLogs } from './workoutHistory';
+
+const LOCAL_BODY_WEIGHTS_KEY = 'wb_local_body_weights';
 
 function parseJsonValue(value, fallback) {
   if (Array.isArray(value) || (value && typeof value === 'object')) return value;
@@ -78,11 +80,55 @@ function fromSupabaseBodyWeightRow(row) {
     id: row.id,
     date: row.date,
     weight_kg: row.weight,
+    pending: false,
   };
 }
 
+function loadLocalBodyWeights() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(LOCAL_BODY_WEIGHTS_KEY) || '[]');
+    return Array.isArray(raw) ? raw : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function saveLocalBodyWeights(entries) {
+  localStorage.setItem(LOCAL_BODY_WEIGHTS_KEY, JSON.stringify(entries));
+}
+
+function upsertLocalBodyWeight(date, weightKg, pending) {
+  const entries = loadLocalBodyWeights();
+  const nextEntry = {
+    date,
+    weight_kg: weightKg,
+    pending,
+    updated_at: new Date().toISOString(),
+  };
+  const index = entries.findIndex((entry) => entry.date === date);
+  if (index === -1) {
+    entries.push(nextEntry);
+  } else {
+    entries[index] = { ...entries[index], ...nextEntry };
+  }
+  entries.sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  saveLocalBodyWeights(entries);
+  return nextEntry;
+}
+
+function mergeBodyWeights(remoteEntries, localEntries) {
+  const mergedByDate = new Map((Array.isArray(remoteEntries) ? remoteEntries : []).map((entry) => [entry.date, entry]));
+  (Array.isArray(localEntries) ? localEntries : []).forEach((entry) => {
+    if (!entry?.date) return;
+    if (entry.pending || !mergedByDate.has(entry.date)) {
+      mergedByDate.set(entry.date, entry);
+    }
+  });
+  return Array.from(mergedByDate.values()).sort((a, b) => String(a.date).localeCompare(String(b.date)));
+}
+
 async function getSupabaseUserId() {
-  const user = await getSupabaseAuthUser();
+  const user = await ensureCurrentSupabaseProfile();
   return user?.id || null;
 }
 
@@ -121,7 +167,11 @@ export async function getWorkoutById(id) {
       const remoteWorkout = fromSupabaseWorkoutRow(data);
       const localWorkout = localWorkouts.get(id);
       if (!remoteWorkout) return localWorkout || null;
-      return localWorkout ? { ...remoteWorkout, ...localWorkout } : remoteWorkout;
+      if (localWorkout?._pendingRemoteSync) {
+        return { ...remoteWorkout, ...localWorkout };
+      }
+      localWorkouts.clearRemoteShadow(id);
+      return remoteWorkout;
     }
   } catch (_) {}
 
@@ -167,6 +217,7 @@ export async function updateWorkout(id, data) {
         .single();
 
       if (error) throw error;
+      localWorkouts.clearRemoteShadow(id);
       return fromSupabaseWorkoutRow(updated);
     }
   } catch (_) {}
@@ -182,6 +233,7 @@ export async function deleteWorkout(id) {
     if (userId && hasSupabaseConfig && supabase) {
       const { error } = await supabase.from('workouts').delete().eq('id', id).eq('user_id', userId);
       if (error) throw error;
+      localWorkouts.clearRemoteShadow(id);
       return true;
     }
   } catch (_) {}
@@ -271,6 +323,7 @@ export async function getLatestAchievement() {
 }
 
 export async function listBodyWeights() {
+  const localBodyWeights = loadLocalBodyWeights();
   try {
     const userId = await getSupabaseUserId();
     if (userId && hasSupabaseConfig && supabase) {
@@ -281,14 +334,22 @@ export async function listBodyWeights() {
         .order('date', { ascending: true });
 
       if (error) throw error;
-      return (Array.isArray(data) ? data : []).map(fromSupabaseBodyWeightRow).filter(Boolean);
+      const remoteBodyWeights = (Array.isArray(data) ? data : []).map(fromSupabaseBodyWeightRow).filter(Boolean);
+      return mergeBodyWeights(remoteBodyWeights, localBodyWeights.filter((entry) => entry.pending));
     }
   } catch (_) {}
 
-  return [];
+  return localBodyWeights;
 }
 
 export async function upsertBodyWeightForDate(date, weightKg) {
+  const normalizedWeight = Number(weightKg);
+  if (!date || !Number.isFinite(normalizedWeight)) {
+    return false;
+  }
+
+  upsertLocalBodyWeight(date, normalizedWeight, true);
+
   try {
     const userId = await getSupabaseUserId();
     if (userId && hasSupabaseConfig && supabase) {
@@ -302,16 +363,20 @@ export async function upsertBodyWeightForDate(date, weightKg) {
       if (existingError) throw existingError;
 
       if (existing?.id) {
-        const { error } = await supabase.from('body_weights').update({ weight: weightKg }).eq('id', existing.id);
+        const { error } = await supabase.from('body_weights').update({ weight: normalizedWeight }).eq('id', existing.id);
         if (error) throw error;
+        upsertLocalBodyWeight(date, normalizedWeight, false);
         return true;
       }
 
-      const { error } = await supabase.from('body_weights').insert({ user_id: userId, date, weight: weightKg });
+      const { error } = await supabase.from('body_weights').insert({ user_id: userId, date, weight: normalizedWeight });
       if (error) throw error;
+      upsertLocalBodyWeight(date, normalizedWeight, false);
       return true;
     }
-  } catch (_) {}
+  } catch (error) {
+    console.error('[workoutDataService] Failed to sync body weight entry.', error);
+  }
 
   return false;
 }

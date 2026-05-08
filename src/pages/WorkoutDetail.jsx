@@ -87,14 +87,18 @@ export default function WorkoutDetail() {
   });
 
   useEffect(() => {
-    if (workout?.id) localWorkouts.upsert(workout);
+    if (workout?.id?.startsWith('local_')) {
+      localWorkouts.upsert(workout);
+    }
   }, [workout]);
 
   const updateMutation = useMutation({
     mutationFn: async (data) => updateWorkout(id, data),
     onMutate: async (data) => {
       await queryClient.cancelQueries({ queryKey: ['workout', id] });
-      if (workout) localWorkouts.upsert({ ...workout, ...data, id });
+      if (workout?.id?.startsWith('local_')) {
+        localWorkouts.upsert({ ...workout, ...data, id });
+      }
       queryClient.setQueryData(['workout', id], (current) => (current ? { ...current, ...data } : current));
     },
     onSuccess: () => {

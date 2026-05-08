@@ -40,24 +40,28 @@ const AuthenticatedApp = () => {
       return;
     }
 
-    import('./lib/userService').then(({ getLocalUser }) => {
-      const local = getLocalUser();
-      if (local.displayName && local.displayName.trim().length >= 4) {
-        setCheckingUsername(false);
-        return;
-      }
-
-      getCurrentAuthUser().then((currentUser) => {
-        const name = currentUser?.profile_name || currentUser?.displayName;
-        if (!name || name.trim().length < 4) {
-          setNeedsUsername(true);
+    import('./lib/userService')
+      .then(({ getLocalUser }) => {
+        const local = getLocalUser();
+        if (local.displayName && local.displayName.trim().length >= 4) {
+          setCheckingUsername(false);
+          return;
         }
-        setCheckingUsername(false);
-      }).catch(() => {
-        setNeedsUsername(true);
+
+        getCurrentAuthUser().then((currentUser) => {
+          const name = currentUser?.profile_name || currentUser?.displayName;
+          if (!name || name.trim().length < 4) {
+            setNeedsUsername(true);
+          }
+          setCheckingUsername(false);
+        }).catch(() => {
+          setNeedsUsername(true);
+          setCheckingUsername(false);
+        });
+      })
+      .catch(() => {
         setCheckingUsername(false);
       });
-    });
   }, [authError, isLoadingAuth, isLoadingPublicSettings, user]);
 
   if (isLoadingPublicSettings || isLoadingAuth || checkingUsername) {
@@ -109,7 +113,7 @@ function App() {
     <LanguageProvider>
       <AuthProvider>
         <QueryClientProvider client={queryClientInstance}>
-          <Router>
+          <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <AuthenticatedApp />
           </Router>
           <Toaster />

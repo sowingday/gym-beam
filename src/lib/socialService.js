@@ -1,4 +1,4 @@
-import { getSupabaseAuthUser } from './authClient';
+import { ensureCurrentSupabaseProfile } from './userService';
 import { hasSupabaseConfig, supabase } from './supabaseClient';
 
 function normalizeFollowRecord(record) {
@@ -26,7 +26,7 @@ function normalizeWorkoutShare(record) {
 
 export async function fetchFollows() {
   try {
-    const supabaseUser = await getSupabaseAuthUser();
+    const supabaseUser = await ensureCurrentSupabaseProfile();
     if (supabaseUser && hasSupabaseConfig && supabase) {
       const { data, error } = await supabase
         .from('follows')
@@ -44,7 +44,7 @@ export async function fetchFollows() {
 
 export async function followUser({ followerId, followerName, followerEmail, followingId, followingName, followingEmail }) {
   try {
-    const supabaseUser = await getSupabaseAuthUser();
+    const supabaseUser = await ensureCurrentSupabaseProfile();
     if (supabaseUser && hasSupabaseConfig && supabase) {
       const payload = {
         follower_id: followerId,
@@ -66,7 +66,7 @@ export async function followUser({ followerId, followerName, followerEmail, foll
 
 export async function unfollowUser(followId) {
   try {
-    const supabaseUser = await getSupabaseAuthUser();
+    const supabaseUser = await ensureCurrentSupabaseProfile();
     if (supabaseUser && hasSupabaseConfig && supabase) {
       const { error } = await supabase.from('follows').delete().eq('id', followId);
       if (error) throw error;
@@ -101,7 +101,7 @@ export function deriveFriends(allFollows, me) {
 
 export async function fetchInboxMessages(userId) {
   try {
-    const supabaseUser = await getSupabaseAuthUser();
+    const supabaseUser = await ensureCurrentSupabaseProfile();
     if (supabaseUser && hasSupabaseConfig && supabase) {
       const { data, error } = await supabase
         .from('workout_shares')
@@ -133,7 +133,7 @@ export async function sendWorkoutShare({ senderId, senderName, recipientId, reci
   };
 
   try {
-    const supabaseUser = await getSupabaseAuthUser();
+    const supabaseUser = await ensureCurrentSupabaseProfile();
     if (supabaseUser && hasSupabaseConfig && supabase) {
       const { error } = await supabase.from('workout_shares').insert(payload);
       if (error) throw error;
@@ -156,7 +156,7 @@ export async function sendInboxShare({ senderId, senderName, recipientId, recipi
   };
 
   try {
-    const supabaseUser = await getSupabaseAuthUser();
+    const supabaseUser = await ensureCurrentSupabaseProfile();
     if (supabaseUser && hasSupabaseConfig && supabase) {
       const { error } = await supabase.from('workout_shares').insert(record);
       if (error) throw error;
@@ -169,7 +169,7 @@ export async function sendInboxShare({ senderId, senderName, recipientId, recipi
 
 export async function markMessageRead(messageId) {
   try {
-    const supabaseUser = await getSupabaseAuthUser();
+    const supabaseUser = await ensureCurrentSupabaseProfile();
     if (supabaseUser && hasSupabaseConfig && supabase) {
       const { error } = await supabase.from('workout_shares').update({ read: true }).eq('id', messageId);
       if (error) throw error;

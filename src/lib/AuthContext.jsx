@@ -18,6 +18,10 @@ export const AuthProvider = ({ children }) => {
     setIsLoadingAuth(true);
     try {
       const currentUser = await getSupabaseAuthUser();
+      if (currentUser) {
+        const { ensureCurrentSupabaseProfile } = await import('./userService');
+        await ensureCurrentSupabaseProfile();
+      }
       setUser(currentUser);
       setIsAuthenticated(Boolean(currentUser));
       setAuthSource(currentUser ? 'supabase' : null);
@@ -74,6 +78,10 @@ export const AuthProvider = ({ children }) => {
       }
 
       const normalizedUser = await getSupabaseAuthUser();
+      if (normalizedUser) {
+        const { ensureCurrentSupabaseProfile } = await import('./userService');
+        await ensureCurrentSupabaseProfile();
+      }
       setUser(normalizedUser);
       setIsAuthenticated(Boolean(normalizedUser));
       setAuthSource(normalizedUser ? 'supabase' : null);

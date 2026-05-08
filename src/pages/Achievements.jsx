@@ -71,7 +71,7 @@ export default function Achievements() {
       total: 'Insgesamt',
       share: 'Erfolge teilen',
     choosePeriod: 'Zeitraum wählen',
-      bodyWeight: 'Koerpergewicht',
+      bodyWeight: 'Körpergewicht',
     exerciseProgress: 'Übungsfortschritt',
     selectExercise: '-- Übung auswählen --',
     noExerciseData: 'Noch keine Daten für diese Übung.',

@@ -125,6 +125,30 @@ async function ensureSupabaseProfile(authUser, local) {
   return data;
 }
 
+export async function ensureCurrentSupabaseProfile() {
+  if (!hasSupabaseConfig || !supabase) return null;
+
+  const authUser = await getSupabaseAuthUser();
+  if (!authUser) return null;
+
+  const local = getLocalUser();
+  const profile = await ensureSupabaseProfile(authUser, local);
+  const merged = mapSupabaseProfileToAppUser(authUser, profile, local);
+
+  saveLocalProfile({
+    displayName: merged.displayName,
+    profile_name: merged.profile_name,
+    username: merged.username,
+    profile_gender: merged.profile_gender,
+    profile_age: merged.profile_age,
+    profile_height: merged.profile_height,
+    profile_weight: merged.profile_weight,
+    profile_picture: merged.profile_picture,
+  });
+
+  return merged;
+}
+
 async function upsertSupabaseProfile(authUser, fields, local) {
   if (!hasSupabaseConfig || !supabase || !authUser?.id) return null;
 
@@ -227,7 +251,7 @@ export function saveLocalProfile(fields) {
 
 export async function saveLocalAvatar(file) {
   if (!file || !file.type.startsWith('image/')) {
-    return { ok: false, reason: 'Keine gueltige Bilddatei.' };
+    return { ok: false, reason: 'Keine gültige Bilddatei.' };
   }
   if (file.size > MAX_AVATAR_BYTES) {
       return { ok: false, reason: 'Bild zu groß für lokale Speicherung (max. ~600 KB). Bitte ein kleineres Bild wählen.' };
@@ -279,12 +303,11 @@ export async function getCurrentUser() {
   const local = getLocalUser();
 
   try {
-    const supabaseUser = await getSupabaseAuthUser();
-    if (supabaseUser) {
-      const profile = await ensureSupabaseProfile(supabaseUser, local);
-      return mapSupabaseProfileToAppUser(supabaseUser, profile, local);
-    }
-  } catch (_) {}
+    const merged = await ensureCurrentSupabaseProfile();
+    if (merged) return merged;
+  } catch (error) {
+    console.error('[userService] Failed to load or create Supabase profile.', error);
+  }
 
   return { ...local, displayName: local.displayName, _isOnline: false, _authSource: 'local' };
 }
@@ -295,27 +318,33 @@ export async function saveProfile(_legacyArg, fields) {
   try {
     const supabaseUser = await getSupabaseAuthUser();
     if (supabaseUser) {
+      await ensureSupabaseProfile(supabaseUser, local);
       await upsertSupabaseProfile(supabaseUser, fields, local);
       return { ok: true, source: 'supabase' };
     }
-  } catch (_) {}
+  } catch (error) {
+    console.error('[userService] Failed to save profile to Supabase.', error);
+  }
 
   return { ok: true, source: 'local' };
 }
 
 export async function uploadAvatar(_legacyArg, file) {
   if (!file || !file.type.startsWith('image/')) {
-    return { ok: false, reason: 'Keine gueltige Bilddatei.' };
+    return { ok: false, reason: 'Keine gültige Bilddatei.' };
   }
 
   try {
     const supabaseUser = await getSupabaseAuthUser();
     if (supabaseUser) {
+      await ensureSupabaseProfile(supabaseUser, getLocalUser());
       const publicUrl = await uploadSupabaseAvatar(supabaseUser, file);
       saveLocalProfile({ profile_picture: publicUrl });
       return { ok: true, url: publicUrl, source: 'supabase' };
     }
-  } catch (_) {}
+  } catch (error) {
+    console.error('[userService] Failed to upload avatar to Supabase.', error);
+  }
 
   const result = await saveLocalAvatar(file);
   if (result.ok) {

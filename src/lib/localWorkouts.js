@@ -35,12 +35,19 @@ export const localWorkouts = {
     const remote = normalizeWorkouts(remoteWorkouts);
     const local = load();
     const localById = new Map(local.map((workout) => [workout.id, workout]));
+    const remoteIds = new Set(remote.map((workout) => workout.id));
     const merged = remote.map((workout) => {
       const localOverride = localById.get(workout.id);
-      return localOverride ? { ...workout, ...localOverride } : workout;
+      if (localOverride?._pendingRemoteSync) {
+        return { ...workout, ...localOverride };
+      }
+      return workout;
     });
-    const remoteIds = new Set(remote.map((workout) => workout.id));
-    const localOnly = local.filter((workout) => !remoteIds.has(workout.id));
+    const retainedLocal = local.filter((workout) => !remoteIds.has(workout.id) || workout._pendingRemoteSync);
+    if (retainedLocal.length !== local.length) {
+      save(retainedLocal);
+    }
+    const localOnly = retainedLocal.filter((workout) => !remoteIds.has(workout.id));
     return [...merged, ...localOnly].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
   },
 
@@ -69,18 +76,27 @@ export const localWorkouts = {
     const workouts = load();
     const index = workouts.findIndex((workout) => workout.id === id);
     if (index === -1) {
-      const shadowWorkout = { id, ...data, updated_date: new Date().toISOString() };
+      const shadowWorkout = { id, ...data, updated_date: new Date().toISOString(), _pendingRemoteSync: !String(id).startsWith('local_') };
       workouts.push(shadowWorkout);
       save(workouts);
       return shadowWorkout;
     }
-    workouts[index] = { ...workouts[index], ...data };
+    workouts[index] = {
+      ...workouts[index],
+      ...data,
+      _pendingRemoteSync: workouts[index]._pendingRemoteSync || !String(id).startsWith('local_'),
+    };
     save(workouts);
     return workouts[index];
   },
 
   delete(id) {
     save(load().filter(w => w.id !== id));
+  },
+
+  clearRemoteShadow(id) {
+    if (!id || String(id).startsWith('local_')) return;
+    save(load().filter((workout) => workout.id !== id));
   },
 
   get(id) {

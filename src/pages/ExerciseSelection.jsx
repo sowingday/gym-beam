@@ -23,9 +23,10 @@ export default function ExerciseSelection() {
   const [multiMode, setMultiMode] = useState(false);
   const [checkedIds, setCheckedIds] = useState(new Set());
 
-  const { data: exercises = [] } = useQuery({
+  const { data: exercises = [], isLoading, error } = useQuery({
     queryKey: ['exercises', language],
     queryFn: async () => getLocalExercises(language),
+    retry: false,
   });
 
   const { data: workout } = useQuery({
@@ -89,6 +90,28 @@ export default function ExerciseSelection() {
       { onSuccess: () => navigate(`/workout/${workoutId}`) },
     );
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background pb-32">
+        <div className="max-w-2xl mx-auto px-4 py-6">
+          <button onClick={() => navigate(`/workout/${workoutId}`)} className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground mb-4 transition-colors">
+            <ArrowLeft className="w-5 h-5" />
+            <span className="text-sm font-body">{t('common.back')}</span>
+          </button>
+          <p className="text-sm text-destructive font-body">Die Übungsdatenbank konnte lokal nicht geladen werden.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-32">

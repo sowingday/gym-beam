@@ -80,7 +80,7 @@ export default function WorkoutTemplatePage() {
   const createMutation = useMutation({
     mutationFn: createWorkout,
     onSuccess: (newWorkout) => {
-      if (newWorkout?.id) localWorkouts.upsert(newWorkout);
+      if (newWorkout?.id?.startsWith('local_')) localWorkouts.upsert(newWorkout);
       queryClient.invalidateQueries({ queryKey: ['workouts'] });
     },
   });

@@ -147,28 +147,58 @@ export function localizeExercises(exercises, lang = 'de', fallbackExercises = []
 }
 
 const cacheByLanguage = new Map();
+const pendingByLanguage = new Map();
+
+async function fetchExercisesJson(timeoutMs = 10000) {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const res = await fetch('/assets/data/exercises.json', {
+      signal: controller.signal,
+      cache: 'no-store',
+    });
+    if (!res.ok) {
+      throw new Error(`Exercise data request failed with status ${res.status}.`);
+    }
+    return await res.json();
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+}
 
 export async function getLocalExercises(language = getAppLanguage()) {
   if (cacheByLanguage.has(language)) {
     return cacheByLanguage.get(language);
   }
 
-  try {
-    const res = await fetch('/assets/data/exercises.json');
-    if (res.ok) {
-      const data = await res.json();
+  if (pendingByLanguage.has(language)) {
+    return pendingByLanguage.get(language);
+  }
+
+  const pending = (async () => {
+    try {
+      const data = await fetchExercisesJson();
       if (Array.isArray(data) && data.length > 0) {
         const normalized = localizeExercises(data, language);
         cacheByLanguage.set(language, normalized);
         return normalized;
       }
+    } catch (_) {
+      // File not present or request timed out - no fallback
     }
-  } catch (_) {
-    // File not present - no fallback
-  }
 
-  cacheByLanguage.set(language, []);
-  return [];
+    cacheByLanguage.set(language, []);
+    return [];
+  })();
+
+  pendingByLanguage.set(language, pending);
+
+  try {
+    return await pending;
+  } finally {
+    pendingByLanguage.delete(language);
+  }
 }
 
 export function getLocalExercisesSync() {

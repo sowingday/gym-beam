@@ -102,7 +102,7 @@ export default function WorkoutPlan() {
       await queryClient.cancelQueries({ queryKey: ['workouts'] });
       const previousWorkouts = queryClient.getQueryData(['workouts']);
       const currentWorkout = previousWorkouts?.find((workout) => workout.id === id);
-      if (currentWorkout) {
+      if (currentWorkout?.id?.startsWith('local_')) {
         localWorkouts.upsert({ ...currentWorkout, ...data, id });
       }
       queryClient.setQueryData(['workouts'], (current = []) => current.map((workout) => (workout.id === id ? { ...workout, ...data } : workout)));
@@ -124,7 +124,7 @@ export default function WorkoutPlan() {
   const createMutation = useMutation({
     mutationFn: createWorkout,
     onSuccess: (newWorkout) => {
-      if (newWorkout?.id) {
+      if (newWorkout?.id?.startsWith('local_')) {
         localWorkouts.upsert(newWorkout);
       }
       queryClient.invalidateQueries({ queryKey: ['workouts'] });

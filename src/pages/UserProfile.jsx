@@ -131,21 +131,30 @@ export default function UserProfile() {
   const [uploadingPic, setUploadingPic] = useState(false);
 
   const loadUser = useCallback(async () => {
-    const user = await getCurrentUser();
-    setMe(user);
-    setNameValue(user.displayName || user.profile_name || '');
-    setProfileGender(user.profile_gender || '');
-    setProfileAge(user.profile_age != null ? String(user.profile_age) : '');
-    setProfileHeight(user.profile_height != null ? String(user.profile_height) : '');
-    setProfileWeight(user.profile_weight != null ? String(user.profile_weight) : '');
+    try {
+      const user = await getCurrentUser();
+      setMe(user);
+      setNameValue(user.displayName || user.profile_name || '');
+      setProfileGender(user.profile_gender || '');
+      setProfileAge(user.profile_age != null ? String(user.profile_age) : '');
+      setProfileHeight(user.profile_height != null ? String(user.profile_height) : '');
+      setProfileWeight(user.profile_weight != null ? String(user.profile_weight) : '');
 
-    if (user._isOnline) {
-      fetchFollows().then((result) => {
-        setFollows(Array.isArray(result) ? result : []);
-        setOnlineAvailable(true);
-      });
+      if (user._isOnline) {
+        fetchFollows()
+          .then((result) => {
+            setFollows(Array.isArray(result) ? result : []);
+            setOnlineAvailable(true);
+          })
+          .catch((error) => {
+            console.error('[UserProfile] Failed to load follows.', error);
+            setFollows([]);
+            setOnlineAvailable(false);
+          });
+      }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   useEffect(() => { loadUser(); }, [loadUser]);
@@ -183,13 +192,18 @@ export default function UserProfile() {
       return;
     }
 
+    if (name === (me?.profile_name || me?.displayName || '').trim()) {
+      setEditingName(false);
+      setNameError('');
+      return;
+    }
+
     setSavingName(true);
     try {
       if (me?._isOnline && name !== me?.profile_name) {
         const available = await checkProfileNameAvailable(name);
         if (available === false) {
           setNameError(copy.nameTaken);
-          setSavingName(false);
           return;
         }
       }
@@ -198,36 +212,44 @@ export default function UserProfile() {
       setEditingName(false);
       setNameError('');
       toast.success(result.source === 'local' ? copy.nameSavedLocal : copy.nameSaved);
-    } catch {
+    } catch (error) {
+      console.error('[UserProfile] Failed to save display name.', error);
       saveLocalProfile({ displayName: name, profile_name: name });
       setMe((prev) => ({ ...prev, displayName: name, profile_name: name }));
       setEditingName(false);
       setNameError('');
       toast.success(copy.nameSavedLocal);
+    } finally {
+      setSavingName(false);
     }
-    setSavingName(false);
   };
 
   const handleSave = async () => {
     setSaving(true);
-    const fields = {
-      profile_gender: profileGender || null,
-      profile_age: parseOptionalNumber(profileAge),
-      profile_height: parseOptionalNumber(profileHeight),
-      profile_weight: parseOptionalNumber(profileWeight),
-    };
+    try {
+      const fields = {
+        profile_gender: profileGender || null,
+        profile_age: parseOptionalNumber(profileAge),
+        profile_height: parseOptionalNumber(profileHeight),
+        profile_weight: parseOptionalNumber(profileWeight),
+      };
 
-    if (me?._isOnline && fields.profile_weight !== null && fields.profile_weight !== (me?.profile_weight ?? null)) {
-      try {
-        const today = new Date().toISOString().split('T')[0];
-        await upsertBodyWeightForDate(today, fields.profile_weight);
-      } catch (_) {}
+      if (me?._isOnline && fields.profile_weight !== null && fields.profile_weight !== (me?.profile_weight ?? null)) {
+        try {
+          const today = new Date().toISOString().split('T')[0];
+          await upsertBodyWeightForDate(today, fields.profile_weight);
+        } catch (_) {}
+      }
+
+      const result = await saveProfile(null, fields);
+      setMe((prev) => ({ ...prev, ...fields }));
+      toast.success(result.source === 'local' ? copy.savedLocal : copy.saved);
+    } catch (error) {
+      console.error('[UserProfile] Failed to save profile.', error);
+      toast.error('Profil konnte nicht gespeichert werden.');
+    } finally {
+      setSaving(false);
     }
-
-    const result = await saveProfile(null, fields);
-    setMe((prev) => ({ ...prev, ...fields }));
-    toast.success(result.source === 'local' ? copy.savedLocal : copy.saved);
-    setSaving(false);
   };
 
   const handlePictureChange = async (event) => {
