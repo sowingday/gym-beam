@@ -10,6 +10,28 @@ function buildSuggestedName(email) {
   return localPart.length >= 4 ? localPart.slice(0, 40) : '';
 }
 
+function GermanFlagIcon() {
+  return (
+    <svg viewBox="0 0 24 16" className="h-4 w-5 rounded-[2px] shadow-sm" aria-hidden="true">
+      <rect width="24" height="16" fill="#000000" />
+      <rect y="5.333" width="24" height="5.333" fill="#dd0000" />
+      <rect y="10.666" width="24" height="5.334" fill="#ffce00" />
+    </svg>
+  );
+}
+
+function UkFlagIcon() {
+  return (
+    <svg viewBox="0 0 24 16" className="h-4 w-5 rounded-[2px] shadow-sm" aria-hidden="true">
+      <rect width="24" height="16" fill="#012169" />
+      <path d="M0 0l24 16M24 0L0 16" stroke="#fff" strokeWidth="4" />
+      <path d="M0 0l24 16M24 0L0 16" stroke="#C8102E" strokeWidth="2" />
+      <path d="M12 0v16M0 8h24" stroke="#fff" strokeWidth="6" />
+      <path d="M12 0v16M0 8h24" stroke="#C8102E" strokeWidth="3.5" />
+    </svg>
+  );
+}
+
 const COPY = {
   de: {
     login: 'Anmelden',
@@ -165,20 +187,20 @@ export default function AuthScreen() {
             <button
               type="button"
               onClick={() => setLanguage('de')}
-              className={`rounded-full border px-2.5 py-1 text-sm transition-colors ${language === 'de' ? 'border-primary bg-primary/10' : 'border-border hover:bg-muted/60'}`}
+              className={`flex items-center justify-center rounded-full border px-2.5 py-1 text-sm transition-colors ${language === 'de' ? 'border-primary bg-primary/10' : 'border-border hover:bg-muted/60'}`}
               aria-label="Deutsch"
               title="Deutsch"
             >
-              🇩🇪
+              <GermanFlagIcon />
             </button>
             <button
               type="button"
               onClick={() => setLanguage('en')}
-              className={`rounded-full border px-2.5 py-1 text-sm transition-colors ${language === 'en' ? 'border-primary bg-primary/10' : 'border-border hover:bg-muted/60'}`}
+              className={`flex items-center justify-center rounded-full border px-2.5 py-1 text-sm transition-colors ${language === 'en' ? 'border-primary bg-primary/10' : 'border-border hover:bg-muted/60'}`}
               aria-label="English"
               title="English"
             >
-              🇬🇧
+              <UkFlagIcon />
             </button>
           </div>
         </div>

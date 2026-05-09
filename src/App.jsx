@@ -64,13 +64,15 @@ const AndroidBackHandler = () => {
 };
 
 const AuthenticatedApp = () => {
-  const { isAuthenticated, isLoadingAuth, isLoadingPublicSettings, authError, user, authFlowMode } = useAuth();
+  const { isAuthenticated, isLoadingAuth, isLoadingPublicSettings, authError, user, authFlowMode, authDebug } = useAuth();
   const [checkingUsername, setCheckingUsername] = useState(true);
   const [needsUsername, setNeedsUsername] = useState(false);
+  const [startupDebugVisible, setStartupDebugVisible] = useState(false);
 
   useEffect(() => {
     if (isLoadingAuth || isLoadingPublicSettings) return;
     if (authError) {
+      console.info('[App] Username check skipped because authError is set.');
       setCheckingUsername(false);
       return;
     }
@@ -87,6 +89,7 @@ const AuthenticatedApp = () => {
       .then(({ getLocalUser }) => {
         if (cancelled) return;
         const local = getLocalUser();
+        console.info('[App] Local username candidate:', local.displayName || '(leer)');
         if (local.displayName && local.displayName.trim().length >= 4) {
           window.clearTimeout(timeoutId);
           setCheckingUsername(false);
@@ -96,6 +99,7 @@ const AuthenticatedApp = () => {
         getCurrentAuthUser().then((currentUser) => {
           if (cancelled) return;
           const name = currentUser?.profile_name || currentUser?.displayName;
+          console.info('[App] Auth username candidate:', name || '(leer)');
           if (!name || name.trim().length < 4) {
             setNeedsUsername(true);
           }
@@ -120,10 +124,40 @@ const AuthenticatedApp = () => {
     };
   }, [authError, isLoadingAuth, isLoadingPublicSettings, user]);
 
+  useEffect(() => {
+    const shouldShow = isLoadingPublicSettings || isLoadingAuth || checkingUsername;
+    if (!shouldShow) {
+      setStartupDebugVisible(false);
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setStartupDebugVisible(true);
+    }, 4000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [checkingUsername, isLoadingAuth, isLoadingPublicSettings]);
+
   if (isLoadingPublicSettings || isLoadingAuth || checkingUsername) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin" />
+      <div className="fixed inset-0 flex items-center justify-center px-6">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin" />
+          {startupDebugVisible ? (
+            <div className="max-w-sm rounded-2xl border border-border bg-card px-4 py-3 shadow-sm">
+              <p className="text-sm font-semibold text-foreground">App startet noch...</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {authDebug?.message || 'Initialisierung läuft.'}
+              </p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Auth lädt: {String(isLoadingAuth)} · Username-Check: {String(checkingUsername)}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Stage: {authDebug?.stage || 'unbekannt'}
+              </p>
+            </div>
+          ) : null}
+        </div>
       </div>
     );
   }

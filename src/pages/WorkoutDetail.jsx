@@ -23,6 +23,15 @@ function computeTotals(exercises, breakDuration) {
   return { totalSecs, totalSets, allSets: durationExercises.length === 0 && exercises.length > 0 };
 }
 
+function getDraggableItemStyle(style, isDropAnimating) {
+  if (!style) return undefined;
+  if (!isDropAnimating) return style;
+  return {
+    ...style,
+    transitionDuration: '120ms',
+  };
+}
+
 export default function WorkoutDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -251,11 +260,12 @@ export default function WorkoutDetail() {
               {(provided) => (
                 <div ref={provided.innerRef} {...provided.droppableProps}>
                   {exercises.map((exercise, index) => (
-                    <Draggable key={`${exercise.exercise_id}-${index}`} draggableId={`ex-${index}`} index={index}>
+                    <Draggable key={exercise.client_key || `${exercise.exercise_id}-${index}`} draggableId={exercise.client_key || `ex-${index}`} index={index}>
                       {(dragProvided, snapshot) => (
                         <div
                           ref={dragProvided.innerRef}
                           {...dragProvided.draggableProps}
+                          style={getDraggableItemStyle(dragProvided.draggableProps.style, snapshot.isDropAnimating)}
                           className={`flex items-center gap-2 px-3 py-2 border-b border-border/50 transition-colors ${snapshot.isDragging ? 'bg-primary/5 shadow-lg' : 'hover:bg-muted/30'}`}
                           onClick={() => navigate(`/exercise/${exercise.exercise_index || exercise.exercise_id}`)}
                         >

@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import { getSupabaseAuthUser } from './authClient';
+import { getSupabaseAuthUser, getSupabaseSessionUser, normalizeSupabaseUser } from './authClient';
 import { processSyncQueue } from './offlineSync';
 import { hasSupabaseConfig, supabase } from './supabaseClient';
 
@@ -26,27 +26,47 @@ export const AuthProvider = ({ children }) => {
   const [authChecked, setAuthChecked] = useState(false);
   const [authSource, setAuthSource] = useState(null);
   const [authFlowMode, setAuthFlowMode] = useState(() => (isRecoveryUrl() ? 'password-recovery' : null));
+  const [authDebug, setAuthDebug] = useState({
+    stage: 'init',
+    message: 'App startet...',
+    updatedAt: new Date().toISOString(),
+  });
+
+  const updateAuthDebug = useCallback((stage, message) => {
+    const next = {
+      stage,
+      message,
+      updatedAt: new Date().toISOString(),
+    };
+    console.info('[AuthContext]', stage, message);
+    setAuthDebug(next);
+  }, []);
 
   const synchronizeAuthenticatedUser = useCallback(async () => {
     try {
+      updateAuthDebug('profile-sync:start', 'Profil und Sync-Queue werden abgeglichen.');
       const { ensureCurrentSupabaseProfile } = await import('./userService');
       await ensureCurrentSupabaseProfile();
       await processSyncQueue();
+      updateAuthDebug('profile-sync:done', 'Profil und Sync-Queue sind abgeglichen.');
     } catch (error) {
       console.error('[AuthContext] Deferred auth synchronization failed.', error);
+      updateAuthDebug('profile-sync:error', `Profil-Sync fehlgeschlagen: ${error?.message || 'Unbekannter Fehler'}`);
     }
-  }, []);
+  }, [updateAuthDebug]);
 
   const checkUserAuth = useCallback(async () => {
     setIsLoadingAuth(true);
+    updateAuthDebug('auth-check:start', 'Benutzersitzung wird geprüft.');
     try {
-      const currentUser = await getSupabaseAuthUser();
+      const currentUser = await getSupabaseSessionUser();
       if (currentUser) {
         setUser(currentUser);
         setIsAuthenticated(true);
         setAuthSource('supabase');
         setAuthError(null);
         setAuthChecked(true);
+        updateAuthDebug('auth-check:authenticated', 'Angemeldeter Benutzer gefunden.');
         void synchronizeAuthenticatedUser();
         return currentUser;
       }
@@ -56,6 +76,7 @@ export const AuthProvider = ({ children }) => {
       setAuthSource(null);
       setAuthError(null);
       setAuthChecked(true);
+      updateAuthDebug('auth-check:none', 'Keine bestehende Sitzung gefunden.');
       return null;
     } catch (error) {
       setUser(null);
@@ -66,11 +87,12 @@ export const AuthProvider = ({ children }) => {
         message: error?.message || 'Authentication required',
       });
       setAuthChecked(true);
+      updateAuthDebug('auth-check:error', `Sitzungsprüfung fehlgeschlagen: ${error?.message || 'Unbekannter Fehler'}`);
       return null;
     } finally {
       setIsLoadingAuth(false);
     }
-  }, [synchronizeAuthenticatedUser]);
+  }, [synchronizeAuthenticatedUser, updateAuthDebug]);
 
   const checkAppState = useCallback(async () => {
     if (!hasSupabaseConfig || !supabase) {
@@ -81,11 +103,13 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(false);
       setAuthChecked(true);
       setIsLoadingAuth(false);
+      updateAuthDebug('config:error', 'Supabase ist nicht konfiguriert.');
       return;
     }
 
+    updateAuthDebug('config:ok', 'Supabase-Konfiguration ist vorhanden.');
     await checkUserAuth();
-  }, [checkUserAuth]);
+  }, [checkUserAuth, updateAuthDebug]);
 
   useEffect(() => {
     checkAppState();
@@ -97,6 +121,7 @@ export const AuthProvider = ({ children }) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      updateAuthDebug('auth-event', `Auth-Event empfangen: ${event}`);
       if (event === 'PASSWORD_RECOVERY' || isRecoveryUrl()) {
         setAuthFlowMode('password-recovery');
       }
@@ -107,10 +132,11 @@ export const AuthProvider = ({ children }) => {
         setAuthSource(null);
         setAuthChecked(true);
         setIsLoadingAuth(false);
+        updateAuthDebug('auth-event:signed-out', 'Keine aktive Sitzung nach Auth-Event.');
         return;
       }
 
-      const normalizedUser = await getSupabaseAuthUser();
+      const normalizedUser = normalizeSupabaseUser(session.user) || await getSupabaseAuthUser();
       if (normalizedUser) {
         void synchronizeAuthenticatedUser();
       }
@@ -120,10 +146,11 @@ export const AuthProvider = ({ children }) => {
       setAuthError(null);
       setAuthChecked(true);
       setIsLoadingAuth(false);
+       updateAuthDebug('auth-event:signed-in', 'Sitzung aktiv und Benutzerzustand aktualisiert.');
     });
 
     return () => subscription.unsubscribe();
-  }, [synchronizeAuthenticatedUser]);
+  }, [synchronizeAuthenticatedUser, updateAuthDebug]);
 
   useEffect(() => {
     const handleOnline = () => {
@@ -212,6 +239,7 @@ export const AuthProvider = ({ children }) => {
       updatePassword,
       authFlowMode,
       exitPasswordRecovery,
+      authDebug,
     }}
     >
       {children}

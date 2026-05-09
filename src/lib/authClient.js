@@ -31,6 +31,16 @@ export async function getSupabaseAuthUser() {
   return normalizeSupabaseUser(data.user);
 }
 
+export async function getSupabaseSessionUser() {
+  if (!hasSupabaseConfig || !supabase) return null;
+
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data?.session?.user) return null;
+  return normalizeSupabaseUser(data.session.user);
+}
+
 export async function getCurrentAuthUser() {
+  const sessionUser = await getSupabaseSessionUser();
+  if (sessionUser) return sessionUser;
   return getSupabaseAuthUser();
 }

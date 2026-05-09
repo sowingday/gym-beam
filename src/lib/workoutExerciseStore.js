@@ -8,6 +8,13 @@ function toFiniteNumber(value, fallback = null) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function createClientKey() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return `exercise_${crypto.randomUUID()}`;
+  }
+  return `exercise_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
 export function normalizeWorkoutExercise(exercise, index = 0) {
   if (!exercise || typeof exercise !== 'object') return exercise;
   return {
@@ -22,6 +29,7 @@ export function normalizeWorkoutExercise(exercise, index = 0) {
     reps: exercise.reps != null ? Math.max(1, toFiniteInteger(exercise.reps, 10)) : 10,
     weight_kg: exercise.weight_kg != null ? toFiniteNumber(exercise.weight_kg, null) : null,
     animation_type: exercise.animation_type || '',
+    client_key: exercise.client_key || createClientKey(),
     sort_order: index,
   };
 }
@@ -69,6 +77,7 @@ export function fromSupabaseWorkoutExerciseRows(rows) {
       reps: row.reps,
       weight_kg: row.weight_kg,
       animation_type: row.animation_type || '',
+      client_key: row.id || undefined,
       sort_order: row.sort_order ?? index,
     }, index));
 }

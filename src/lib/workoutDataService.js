@@ -170,7 +170,10 @@ async function replaceSupabaseWorkoutExercises(workoutId, exercises) {
   const rows = toSupabaseWorkoutExerciseRows(workoutId, reindexedExercises);
   const { data, error } = await supabase.from('workout_exercises').insert(rows).select('*');
   if (error) throw error;
-  return fromSupabaseWorkoutExerciseRows(data);
+  return fromSupabaseWorkoutExerciseRows(data).map((exercise, index) => ({
+    ...exercise,
+    client_key: reindexedExercises[index]?.client_key || exercise.client_key,
+  }));
 }
 
 async function migrateLegacyWorkoutExercises(workouts, exerciseRowsByWorkoutId) {
