@@ -29,7 +29,7 @@ import { LanguageProvider } from './lib/i18n';
 import { getCurrentAuthUser } from './lib/authClient';
 
 const AuthenticatedApp = () => {
-  const { isAuthenticated, isLoadingAuth, isLoadingPublicSettings, authError, user } = useAuth();
+  const { isAuthenticated, isLoadingAuth, isLoadingPublicSettings, authError, user, authFlowMode } = useAuth();
   const [checkingUsername, setCheckingUsername] = useState(true);
   const [needsUsername, setNeedsUsername] = useState(false);
 
@@ -70,6 +70,10 @@ const AuthenticatedApp = () => {
         <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin" />
       </div>
     );
+  }
+
+  if (authFlowMode === 'password-recovery') {
+    return <AuthScreen />;
   }
 
   if (!isAuthenticated) {

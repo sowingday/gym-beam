@@ -5,6 +5,17 @@ import { hasSupabaseConfig, supabase } from './supabaseClient';
 
 const AuthContext = createContext();
 
+function isRecoveryUrl() {
+  if (typeof window === 'undefined') return false;
+
+  const query = new URLSearchParams(window.location.search);
+  if (query.get('type') === 'recovery') return true;
+
+  const hash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash;
+  const hashParams = new URLSearchParams(hash);
+  return hashParams.get('type') === 'recovery';
+}
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -14,6 +25,7 @@ export const AuthProvider = ({ children }) => {
   const [appPublicSettings] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [authSource, setAuthSource] = useState(null);
+  const [authFlowMode, setAuthFlowMode] = useState(() => (isRecoveryUrl() ? 'password-recovery' : null));
 
   const checkUserAuth = useCallback(async () => {
     setIsLoadingAuth(true);
@@ -69,7 +81,11 @@ export const AuthProvider = ({ children }) => {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'PASSWORD_RECOVERY' || isRecoveryUrl()) {
+        setAuthFlowMode('password-recovery');
+      }
+
       if (!session?.user) {
         setUser(null);
         setIsAuthenticated(false);
@@ -108,6 +124,7 @@ export const AuthProvider = ({ children }) => {
     if (!supabase) throw new Error('Supabase is not configured.');
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
+    setAuthFlowMode(null);
     await checkUserAuth();
   };
 
@@ -124,6 +141,27 @@ export const AuthProvider = ({ children }) => {
       },
     });
     if (error) throw error;
+  };
+
+  const requestPasswordReset = async (email) => {
+    if (!supabase) throw new Error('Supabase is not configured.');
+    const redirectTo = `${window.location.origin}${window.location.pathname}`;
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+    if (error) throw error;
+  };
+
+  const updatePassword = async (password) => {
+    if (!supabase) throw new Error('Supabase is not configured.');
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) throw error;
+    setAuthFlowMode(null);
+    window.history.replaceState({}, document.title, window.location.pathname);
+    await checkUserAuth();
+  };
+
+  const exitPasswordRecovery = () => {
+    setAuthFlowMode(null);
+    window.history.replaceState({}, document.title, window.location.pathname);
   };
 
   const logout = async (shouldRedirect = true) => {
@@ -157,6 +195,10 @@ export const AuthProvider = ({ children }) => {
       checkUserAuth,
       signInWithPassword,
       signUpWithPassword,
+      requestPasswordReset,
+      updatePassword,
+      authFlowMode,
+      exitPasswordRecovery,
     }}
     >
       {children}

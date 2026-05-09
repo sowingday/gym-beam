@@ -40,7 +40,12 @@ export const getMusicMode = () => getSetting('music_mode') || 'all';
 export const getTodayHighlightColor = () => getSetting('today_highlight_color');
 export const getTodayHighlightEnabled = () => getSetting('today_highlight_enabled') === 'true';
 export const getAppLanguage = () => {
-  const lang = getSetting('app_language');
+  const stored = localStorage.getItem('wb_app_language');
+  if (stored === 'en' || stored === 'de') {
+    return stored;
+  }
+  const browserLanguage = String(navigator.language || navigator.userLanguage || '').toLowerCase();
+  const lang = browserLanguage.startsWith('en') ? 'en' : 'de';
   return lang === 'en' ? 'en' : 'de';
 };
 export const getPlanZoom = () => {
