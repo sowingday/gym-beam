@@ -7,9 +7,11 @@ import { splitToArray, safeString } from '../lib/normalize';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import StickFigureAnimation from '../components/StickFigureAnimation';
+import MuscleCard from '../components/MuscleCard';
 import { getLocalExercises } from '../lib/localExercises';
 import { toast } from 'sonner';
 import { useI18n } from '../lib/i18n';
+import { resolveMusclesEn } from '../lib/muscleData';
 import { getWorkoutById, updateWorkout } from '../lib/workoutDataService';
 import { reindexWorkoutExercises } from '../lib/workoutExerciseStore';
 
@@ -115,6 +117,32 @@ export default function ExerciseDetails() {
   const musclesLatin = splitToArray(exercise.musclesLatin);
   const animIndex = exIndex != null ? Number(exIndex) : null;
   const animType = exercise.animation_type || exercise.animationKey || '';
+  const muscleCards = muscles.length > 0
+    ? resolveMusclesEn(muscles).map((item) => ({
+      key: item.key,
+      name: item.key,
+      latinName: item.latin,
+      region: item.region,
+    }))
+    : [];
+  const muscleEntries = muscleCards.length > 0
+    ? muscleCards.map((item) => ({
+      ...item,
+      label: item.name.split('-').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(' '),
+    }))
+    : muscles.map((muscle, index) => ({
+      key: `${muscle}-${index}`,
+      label: muscle,
+      latinName: musclesLatin[index] || '',
+      region: 'core',
+    }));
+
+  const InfoCard = ({ title, children }) => (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 font-body">{title}</h3>
+      {children}
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -161,45 +189,34 @@ export default function ExerciseDetails() {
 
         <div className="space-y-4">
           {description ? (
-            <div>
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2 font-body">{t('exercises.description')}</h3>
+            <InfoCard title={t('exercises.description')}>
               <p className="text-foreground font-body leading-relaxed">{description}</p>
-            </div>
+            </InfoCard>
           ) : null}
 
-          {muscles.length > 0 ? (
-            <div>
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2 font-body">{t('exercises.muscles')}</h3>
-              <div className="flex flex-wrap gap-1.5">
-                {muscles.map((muscle, index) => <span key={index} className="text-xs font-body bg-muted text-muted-foreground rounded-full px-2.5 py-0.5">{muscle}</span>)}
+          {muscleEntries.length > 0 ? (
+            <InfoCard title={`${t('exercises.muscles')} / ${t('exercises.musclesLatin')}`}>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {muscleEntries.map((muscle) => (
+                  <MuscleCard key={muscle.key} name={muscle.label} latinName={muscle.latinName} region={muscle.region} />
+                ))}
               </div>
-            </div>
-          ) : null}
-
-          {musclesLatin.length > 0 ? (
-            <div>
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2 font-body">{t('exercises.musclesLatin')}</h3>
-              <div className="flex flex-wrap gap-1.5">
-                {musclesLatin.map((muscle, index) => <span key={index} className="text-xs font-body bg-primary/5 text-primary/80 rounded-full px-2.5 py-0.5 italic">{muscle}</span>)}
-              </div>
-            </div>
+            </InfoCard>
           ) : null}
 
           {notes ? (
-            <div>
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2 font-body">{t('exercises.notes')}</h3>
+            <InfoCard title={t('exercises.notes')}>
               <p className="text-foreground font-body leading-relaxed">{notes}</p>
-            </div>
+            </InfoCard>
           ) : null}
 
           {exercise.video_url ? (
-            <div>
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2 font-body">{t('exercises.video')}</h3>
+            <InfoCard title={t('exercises.video')}>
               <a href={exercise.video_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors font-body">
                 <ExternalLink className="w-4 h-4" />
                 {t('exercises.watchVideo')}
               </a>
-            </div>
+            </InfoCard>
           ) : null}
         </div>
       </div>

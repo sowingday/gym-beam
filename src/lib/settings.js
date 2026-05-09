@@ -9,6 +9,7 @@ const DEFAULTS = {
   show_greeting: 'true',
   music_mode: 'all',
   countdown_start: 3,
+  countdown_before_end: 0,
   today_highlight_color: '#ff8c00',
   today_highlight_enabled: 'true',
   plan_zoom: 1.15,
@@ -20,6 +21,7 @@ export function getSetting(key) {
   if (val === null || val === '') return DEFAULTS[key];
   if (key === 'break_duration') return Math.max(0, parseInt(val, 10) || 0);
   if (key === 'countdown_start') return Math.max(0, parseInt(val, 10) || 0);
+  if (key === 'countdown_before_end') return Math.max(0, Math.min(10, parseInt(val, 10) || 0));
   return val;
 }
 
@@ -36,6 +38,7 @@ export const getShowExerciseDur = () => getSetting('show_exercise_dur') === 'tru
 export const getBreakBeep = () => getSetting('break_beep') === 'true';
 export const getShowGreeting = () => getSetting('show_greeting') === 'true';
 export const getCountdownStart = () => getSetting('countdown_start');
+export const getCountdownBeforeEnd = () => getSetting('countdown_before_end');
 export const getMusicMode = () => getSetting('music_mode') || 'all';
 export const getTodayHighlightColor = () => getSetting('today_highlight_color');
 export const getTodayHighlightEnabled = () => getSetting('today_highlight_enabled') === 'true';

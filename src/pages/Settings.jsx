@@ -104,7 +104,10 @@ function GroupTitle({ children }) {
 
 export default function Settings() {
   const { language, setLanguage, t } = useI18n();
-  const [breakDuration, setBreakDuration] = useState(getSetting('break_duration'));
+  const [breakDuration, setBreakDuration] = useState(() => {
+    const value = Number(getSetting('break_duration'));
+    return value > 0 ? String(value) : '';
+  });
   const [musicStyle, setMusicStyle] = useState(getSetting('music_style'));
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [musicMode, setMusicMode] = useState(getSetting('music_mode') || 'all');
@@ -114,7 +117,14 @@ export default function Settings() {
   const [showExerciseDur, setShowExerciseDur] = useState(getSetting('show_exercise_dur'));
   const [breakBeep, setBreakBeep] = useState(getSetting('break_beep'));
   const [showGreeting, setShowGreeting] = useState(getSetting('show_greeting'));
-  const [countdownStart, setCountdownStart] = useState(getSetting('countdown_start'));
+  const [countdownStart, setCountdownStart] = useState(() => {
+    const value = Number(getSetting('countdown_start'));
+    return value > 0 ? String(value) : '';
+  });
+  const [countdownBeforeEnd, setCountdownBeforeEnd] = useState(() => {
+    const value = Number(getSetting('countdown_before_end'));
+    return value > 0 ? String(value) : '';
+  });
   const rawZoom = String(getSetting('plan_zoom'));
   const normalizedZoom = ['klein', 'mittel', 'gross', 'groß'].includes(rawZoom) ? rawZoom.replace('groß', 'gross') : 'mittel';
   const [planZoom, setPlanZoom] = useState(normalizedZoom);
@@ -131,6 +141,8 @@ export default function Settings() {
       breakBetween: 'Pause zwischen Übungen',
       countdownSound: 'Countdown-Ton',
       countdownStart: 'Countdown beim Start',
+      countdownBeforeEnd: 'Countdown vor Übungsende',
+      countdownBeforeEndHint: '0 bis 10 Sekunden. Wird bei kurzen Übungen automatisch begrenzt.',
       yes: 'ja',
       no: 'nein',
       up: 'hoch',
@@ -151,6 +163,8 @@ export default function Settings() {
       breakBetween: 'Break between exercises',
       countdownSound: 'Countdown sound',
       countdownStart: 'Countdown at start',
+      countdownBeforeEnd: 'Countdown before exercise end',
+      countdownBeforeEndHint: '0 to 10 seconds. Automatically limited for short exercises.',
       yes: 'yes',
       no: 'no',
       up: 'up',
@@ -165,15 +179,42 @@ export default function Settings() {
   useEffect(() => () => stopMusic(), []);
 
   const handleBreakChange = (val) => {
+    if (val === '') {
+      setBreakDuration('');
+      setSetting('break_duration', 0);
+      return;
+    }
     const num = Math.max(0, Math.min(999, parseInt(val, 10) || 0));
-    setBreakDuration(num);
+    setBreakDuration(String(num));
     setSetting('break_duration', num);
   };
 
   const handleCountdownChange = (val) => {
+    if (val === '') {
+      setCountdownStart('');
+      setSetting('countdown_start', 0);
+      return;
+    }
     const num = Math.max(0, Math.min(60, parseInt(val, 10) || 0));
-    setCountdownStart(num);
+    setCountdownStart(String(num));
     setSetting('countdown_start', num);
+  };
+
+  const handleCountdownBeforeEndChange = (val) => {
+    if (val === '') {
+      setCountdownBeforeEnd('');
+      setSetting('countdown_before_end', 0);
+      return;
+    }
+    const num = Math.max(0, Math.min(10, parseInt(val, 10) || 0));
+    setCountdownBeforeEnd(String(num));
+    setSetting('countdown_before_end', num);
+  };
+
+  const normalizeNumberInput = (value, setter, key, max) => {
+    const num = Math.max(0, Math.min(max, parseInt(value, 10) || 0));
+    setter(num > 0 ? String(num) : '');
+    setSetting(key, num);
   };
 
   const handleMusicSelect = (id) => {
@@ -235,7 +276,7 @@ export default function Settings() {
             </Row>
             <Row label={copy.breakBetween}>
               <div className="flex items-center gap-2">
-                <Input type="number" min={0} max={999} value={breakDuration} onChange={(e) => handleBreakChange(e.target.value)} className="w-20 text-center text-base font-display" />
+                <Input type="number" min={0} max={999} value={breakDuration} onChange={(e) => handleBreakChange(e.target.value)} onBlur={() => normalizeNumberInput(breakDuration, setBreakDuration, 'break_duration', 999)} className="w-20 text-center text-base font-display" />
                 <span className="text-muted-foreground font-body text-sm">{t('common.seconds')}</span>
               </div>
             </Row>
@@ -250,7 +291,13 @@ export default function Settings() {
             </Row>
             <Row label={copy.countdownStart}>
               <div className="flex items-center gap-2">
-                <Input type="number" min={0} max={60} value={countdownStart} onChange={(e) => handleCountdownChange(e.target.value)} className="w-20 text-center text-base font-display" />
+                <Input type="number" min={0} max={60} value={countdownStart} onChange={(e) => handleCountdownChange(e.target.value)} onBlur={() => normalizeNumberInput(countdownStart, setCountdownStart, 'countdown_start', 60)} className="w-20 text-center text-base font-display" />
+                <span className="text-muted-foreground font-body text-sm">{t('common.seconds')}</span>
+              </div>
+            </Row>
+            <Row label={copy.countdownBeforeEnd} hint={copy.countdownBeforeEndHint}>
+              <div className="flex items-center gap-2">
+                <Input type="number" min={0} max={10} value={countdownBeforeEnd} onChange={(e) => handleCountdownBeforeEndChange(e.target.value)} onBlur={() => normalizeNumberInput(countdownBeforeEnd, setCountdownBeforeEnd, 'countdown_before_end', 10)} className="w-20 text-center text-base font-display" />
                 <span className="text-muted-foreground font-body text-sm">{t('common.seconds')}</span>
               </div>
             </Row>

@@ -52,35 +52,63 @@ export default function WorkoutPlan() {
   const [renameValue, setRenameValue] = useState('');
   const [dayOrders, setDayOrders] = useState({});
   const [existingSheet, setExistingSheet] = useState(null);
+  const greetingAttemptedRef = React.useRef(false);
 
   useEffect(() => {
     seedExercisesIfNeeded().catch(() => {}).then(async () => {
       setSeeding(false);
-      if (!getShowGreeting()) return;
-      if (window.__wb_greeted__) return;
-      window.__wb_greeted__ = true;
-
-      try {
-        const latestAchievement = await getLatestAchievement();
-        if (!latestAchievement?.date) return;
-
-        const lastDate = latestAchievement.date;
-        const today = new Date().toISOString().split('T')[0];
-        if (lastDate === today) return;
-
-        const user = await getCurrentAuthUser();
-        const name = user.profile_name || user.full_name || 'Max Muscle';
-        const last = new Date(lastDate);
-        const diff = differenceInDays(new Date(today), last);
-        let when;
-        if (diff === 1) when = t('workoutPlan.yesterday');
-        else if (diff === 2) when = t('workoutPlan.dayBeforeYesterday');
-        else when = t('workoutPlan.onDate', { date: format(last, 'EEEE, dd. MMMM', { locale: dateLocale }) });
-
-        toast(t('workoutPlan.greeting', { name, when }), { duration: 6000 });
-      } catch (_) {}
     });
-  }, [dateLocale, t]);
+  }, []);
+
+  useEffect(() => {
+    if (seeding || !getShowGreeting() || greetingAttemptedRef.current) return;
+
+    let cancelled = false;
+    greetingAttemptedRef.current = true;
+
+    const showGreeting = async () => {
+      for (let attempt = 0; attempt < 4; attempt += 1) {
+        try {
+          const latestAchievement = await getLatestAchievement();
+          if (!latestAchievement?.date) {
+            if (attempt < 3) {
+              await new Promise((resolve) => window.setTimeout(resolve, 900));
+              continue;
+            }
+            return;
+          }
+
+          const lastDate = latestAchievement.date;
+          const today = new Date().toISOString().split('T')[0];
+          if (lastDate === today || cancelled) return;
+
+          const user = await getCurrentAuthUser();
+          const name = user?.profile_name || user?.full_name || 'Max Muscle';
+          const last = new Date(lastDate);
+          const diff = differenceInDays(new Date(today), last);
+          let when;
+          if (diff === 1) when = t('workoutPlan.yesterday');
+          else if (diff === 2) when = t('workoutPlan.dayBeforeYesterday');
+          else when = t('workoutPlan.onDate', { date: format(last, 'EEEE, dd. MMMM', { locale: dateLocale }) });
+
+          toast(t('workoutPlan.greeting', { name, when }), { duration: 8000 });
+          return;
+        } catch (_) {
+          if (attempt < 3) {
+            await new Promise((resolve) => window.setTimeout(resolve, 900));
+            continue;
+          }
+          return;
+        }
+      }
+    };
+
+    void showGreeting();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [dateLocale, seeding, t]);
 
   const { data: workouts = [], isLoading } = useQuery({
     queryKey: ['workouts'],

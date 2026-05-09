@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   getBreakDuration, getMusicStyle, getMusicMode,
   getTotalDir, getExerciseDir,
-  getShowTotalDur, getShowExerciseDur, getBreakBeep, getCountdownStart,
+  getShowTotalDur, getShowExerciseDur, getBreakBeep, getCountdownStart, getCountdownBeforeEnd,
 } from '../lib/settings';
 import { startMusic, stopMusic, setMuted as setMusicMuted, prepareMusic } from '../lib/musicPlayer';
 import { localWorkouts } from '../lib/localWorkouts';
@@ -94,6 +94,7 @@ export default function Training() {
   const SHOW_EX_DUR = useRef(getShowExerciseDur()).current;
   const BREAK_BEEP = useRef(getBreakBeep()).current;
   const COUNTDOWN_START = useRef(Number(getCountdownStart())).current;
+  const COUNTDOWN_BEFORE_END = useRef(Number(getCountdownBeforeEnd())).current;
 
   const { data: workout } = useQuery({
     queryKey: ['workout', id],
@@ -259,7 +260,8 @@ export default function Training() {
         const target = exercise?.duration || 90;
         const next = prev + 1;
         const remaining = target - next;
-        if (remaining > 0 && remaining <= 3) playBeep(660, 0.08, 0.2);
+        const exerciseEndCountdown = Math.max(0, Math.min(COUNTDOWN_BEFORE_END, target - 5));
+        if (exerciseEndCountdown > 0 && remaining > 0 && remaining <= exerciseEndCountdown) playBeep(660, 0.08, 0.2);
         if (next >= target) {
           if (!skippedRef.current.has(currentIndex)) {
             completedCountRef.current += 1;
@@ -375,6 +377,7 @@ export default function Training() {
     } catch (_) {
       localWorkouts.update(id, { exercises: updatedExercises });
     }
+    queryClient.setQueryData(['workout', id], (current) => (current ? { ...current, exercises: updatedExercises } : current));
     queryClient.invalidateQueries({ queryKey: ['workout', id] });
     setEditIdx(null);
   };
@@ -450,7 +453,7 @@ export default function Training() {
                   <p className="text-muted-foreground font-body text-lg mb-4">{copy.break}</p>
                   <span className="font-display text-[120px] md:text-[160px] leading-none text-primary">{breakTimer}</span>
                   <div className="mt-4">
-                    <Button variant="ghost" size="sm" onClick={handleSkip} className="gap-2 text-muted-foreground"><SkipForward className="w-4 h-4" />{copy.skipBreak}</Button>
+                    <Button variant="secondary" size="lg" onClick={handleSkip} className="h-14 px-6 gap-3 text-base rounded-2xl shadow-md"><SkipForward className="w-5 h-5" />{copy.skipBreak}</Button>
                   </div>
                 </motion.div>
               ) : currentExercise ? (
@@ -500,17 +503,17 @@ export default function Training() {
                     </div>
                   ) : null}
 
-                  <div className="flex items-center justify-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={handleRepeat} className="text-muted-foreground hover:text-primary"><RotateCcw className="w-5 h-5" /></Button>
+                  <div className="flex items-center justify-center gap-3 sm:gap-4">
+                    <Button variant="secondary" size="icon" onClick={handleRepeat} className="w-14 h-14 rounded-2xl shadow-md text-muted-foreground hover:text-primary"><RotateCcw className="w-6 h-6" /></Button>
                     {isSetMode ? (
                       <>
                         <span className="font-display text-5xl text-accent">{currentSet}/{currentExercise.sets || 3}</span>
-                        <Button variant="ghost" size="icon" onClick={handleSetCheck} className="text-green-500 hover:text-green-600 hover:bg-green-500/10"><Check className="w-6 h-6" /></Button>
+                        <Button variant="default" size="icon" onClick={handleSetCheck} className="w-16 h-16 rounded-2xl shadow-lg bg-green-500 hover:bg-green-600 text-white"><Check className="w-8 h-8" /></Button>
                       </>
                     ) : (
                       <span className="font-display text-5xl text-accent">{mmss(exerciseDisplayed)}</span>
                     )}
-                    <Button variant="ghost" size="icon" onClick={handleSkip} className="text-muted-foreground hover:text-primary"><SkipForward className="w-5 h-5" /></Button>
+                    <Button variant="secondary" size="icon" onClick={handleSkip} className="w-14 h-14 rounded-2xl shadow-md text-muted-foreground hover:text-primary"><SkipForward className="w-6 h-6" /></Button>
                   </div>
                 </motion.div>
               ) : null}
@@ -526,7 +529,7 @@ export default function Training() {
               {completedCount} / {completedTotal} {language === 'en' ? copy.completed : `Übungen ${copy.completed}`}
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.5 }}>
-              <Button onClick={handleFinish} size="lg" className="gap-3 h-16 px-10 text-xl font-display tracking-wider rounded-2xl shadow-xl bg-green-500 hover:bg-green-600 text-white shadow-green-500/30"><CheckCircle2 className="w-8 h-8" />OK</Button>
+              <Button onClick={handleFinish} size="lg" className="gap-3 h-18 min-h-[4.5rem] px-10 text-xl font-display tracking-wider rounded-2xl shadow-xl bg-green-500 hover:bg-green-600 text-white shadow-green-500/30"><CheckCircle2 className="w-8 h-8" />OK</Button>
             </motion.div>
           </div>
         ) : null}

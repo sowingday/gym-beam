@@ -6,9 +6,8 @@ import BottomNav from '../components/BottomNav';
 import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import CategorySelect from '../components/CategorySelect';
-import { localWorkouts } from '../lib/localWorkouts';
 import { useI18n } from '../lib/i18n';
-import { listWorkoutTemplates } from '../lib/workoutDataService';
+import { listWorkoutTemplates, listWorkouts } from '../lib/workoutDataService';
 
 function getCategories(language) {
   return language === 'en'
@@ -36,33 +35,51 @@ export default function WorkoutDatabase() {
   const [nameFilter, setNameFilter] = useState('');
   const [keywordFilter, setKeywordFilter] = useState('');
 
-  const { data: templates = [], isLoading } = useQuery({
+  const { data: templates = [], isLoading: templatesLoading } = useQuery({
     queryKey: ['workout-templates'],
     queryFn: listWorkoutTemplates,
   });
 
-  const ownWorkouts = useMemo(() => localWorkouts.list().filter((workout) => workout.name && workout.name.trim()), []);
+  const { data: ownWorkouts = [], isLoading: workoutsLoading } = useQuery({
+    queryKey: ['workouts'],
+    queryFn: listWorkouts,
+  });
   const ownCategory = categories[1];
   const allCategory = categories[0];
 
   const filtered = useMemo(() => {
+    const templateItems = templates
+      .filter((template) => {
+        if (!template || !template.name || !template.name.trim()) return false;
+        if (category !== allCategory && category !== ownCategory && template.category !== category) return false;
+        if (nameFilter.trim() && !template.name.toLowerCase().includes(nameFilter.trim().toLowerCase())) return false;
+        if (keywordFilter.trim()) {
+          const keyword = keywordFilter.trim().toLowerCase();
+          const inTags = (template.tags || '').toLowerCase().includes(keyword);
+          const inDesc = (template.description || '').toLowerCase().includes(keyword);
+          if (!inTags && !inDesc) return false;
+        }
+        return true;
+      })
+      .map((template) => ({ ...template, _source: 'template' }));
+
+    const ownItems = ownWorkouts
+      .filter((workout) => workout.name && workout.name.trim())
+      .filter((workout) => {
+        const query = nameFilter.trim().toLowerCase();
+        return !query || workout.name.toLowerCase().includes(query);
+      })
+      .map((workout) => ({ ...workout, _source: 'own', category: ownCategory }));
+
     if (category === ownCategory) {
-      const query = nameFilter.trim().toLowerCase();
-      return ownWorkouts.filter((workout) => !query || workout.name.toLowerCase().includes(query));
+      return ownItems;
     }
 
-    return templates.filter((template) => {
-      if (!template || !template.name || !template.name.trim()) return false;
-      if (category !== allCategory && template.category !== category) return false;
-      if (nameFilter.trim() && !template.name.toLowerCase().includes(nameFilter.trim().toLowerCase())) return false;
-      if (keywordFilter.trim()) {
-        const keyword = keywordFilter.trim().toLowerCase();
-        const inTags = (template.tags || '').toLowerCase().includes(keyword);
-        const inDesc = (template.description || '').toLowerCase().includes(keyword);
-        if (!inTags && !inDesc) return false;
-      }
-      return true;
-    });
+    if (category === allCategory) {
+      return [...ownItems, ...templateItems];
+    }
+
+    return templateItems;
   }, [allCategory, category, keywordFilter, nameFilter, ownCategory, ownWorkouts, templates]);
 
   return (
@@ -84,7 +101,7 @@ export default function WorkoutDatabase() {
         <Input placeholder={language === 'en' ? 'Workout name' : 'Workout Name'} value={nameFilter} onChange={(e) => setNameFilter(e.target.value)} className="mb-2 font-body shadow-[0_2px_8px_0_rgba(0,0,0,0.12)]" />
         <Input placeholder={language === 'en' ? 'Keyword (tags, description)' : 'Stichwort (Tags, Beschreibung)'} value={keywordFilter} onChange={(e) => setKeywordFilter(e.target.value)} className="mb-5 font-body shadow-[0_2px_8px_0_rgba(0,0,0,0.12)]" />
 
-        {isLoading ? (
+        {templatesLoading || workoutsLoading ? (
           <div className="flex justify-center py-12">
             <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
           </div>
@@ -103,7 +120,7 @@ export default function WorkoutDatabase() {
                 <button
                   key={template.id}
                   onClick={() => {
-                    if (category === ownCategory) navigate(`/workout/${template.id}`);
+                    if (template._source === 'own') navigate(`/workout/${template.id}`);
                     else navigate(`/workout-template/${template.id}${addToDay ? `?addToDay=${addToDay}` : ''}`);
                   }}
                   className={`px-4 py-1 text-left w-full flex items-center gap-3 hover:bg-primary/5 transition-colors border-b border-border/50 last:border-b-0 ${bgColor}`}
