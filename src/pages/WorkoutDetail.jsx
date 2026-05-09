@@ -126,8 +126,8 @@ export default function WorkoutDetail() {
 
   const updateMutation = useMutation({
     mutationFn: async (data) => updateWorkout(id, data),
-    onMutate: async (data) => {
-      await queryClient.cancelQueries({ queryKey: ['workout', id] });
+    onMutate: (data) => {
+      void queryClient.cancelQueries({ queryKey: ['workout', id] });
       const currentWorkout = queryClient.getQueryData(['workout', id]);
       if (currentWorkout?.id?.startsWith('local_')) {
         localWorkouts.upsert({ ...currentWorkout, ...data, id });
