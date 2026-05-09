@@ -32,6 +32,26 @@ function getDraggableItemStyle(style, isDropAnimating) {
   };
 }
 
+function areExercisesEquivalent(currentExercises = [], nextExercises = []) {
+  if (currentExercises.length !== nextExercises.length) return false;
+  return currentExercises.every((exercise, index) => {
+    const nextExercise = nextExercises[index];
+    if (!nextExercise) return false;
+    return exercise.client_key === nextExercise.client_key
+      && exercise.exercise_id === nextExercise.exercise_id
+      && exercise.exercise_index === nextExercise.exercise_index
+      && exercise.name === nextExercise.name
+      && exercise.category === nextExercise.category
+      && exercise.duration === nextExercise.duration
+      && exercise.use_sets === nextExercise.use_sets
+      && exercise.sets === nextExercise.sets
+      && exercise.reps === nextExercise.reps
+      && exercise.weight_kg === nextExercise.weight_kg
+      && exercise.animation_type === nextExercise.animation_type
+      && exercise.sort_order === nextExercise.sort_order;
+  });
+}
+
 export default function WorkoutDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -108,14 +128,30 @@ export default function WorkoutDetail() {
     mutationFn: async (data) => updateWorkout(id, data),
     onMutate: async (data) => {
       await queryClient.cancelQueries({ queryKey: ['workout', id] });
-      if (workout?.id?.startsWith('local_')) {
-        localWorkouts.upsert({ ...workout, ...data, id });
+      const currentWorkout = queryClient.getQueryData(['workout', id]);
+      if (currentWorkout?.id?.startsWith('local_')) {
+        localWorkouts.upsert({ ...currentWorkout, ...data, id });
       }
       queryClient.setQueryData(['workout', id], (current) => (current ? { ...current, ...data } : current));
+      return { previousWorkout: currentWorkout };
+    },
+    onError: (_error, _data, context) => {
+      if (context?.previousWorkout) {
+        queryClient.setQueryData(['workout', id], context.previousWorkout);
+      }
     },
     onSuccess: (updatedWorkout) => {
       if (updatedWorkout) {
-        queryClient.setQueryData(['workout', id], updatedWorkout);
+        queryClient.setQueryData(['workout', id], (current) => {
+          if (!current) return updatedWorkout;
+          if (areExercisesEquivalent(current.exercises || [], updatedWorkout.exercises || [])) {
+            return {
+              ...updatedWorkout,
+              exercises: current.exercises,
+            };
+          }
+          return updatedWorkout;
+        });
       }
       queryClient.invalidateQueries({ queryKey: ['workouts'] });
     },
@@ -130,9 +166,7 @@ export default function WorkoutDetail() {
     const items = Array.from(exercises);
     const [moved] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, moved);
-    const reindexedItems = reindexWorkoutExercises(items);
-    queryClient.setQueryData(['workout', id], { ...workout, exercises: reindexedItems });
-    updateMutation.mutate({ exercises: reindexedItems });
+    updateMutation.mutate({ exercises: items });
   };
 
   const handleDeleteExercise = () => {

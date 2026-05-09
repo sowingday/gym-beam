@@ -195,9 +195,18 @@ async function migrateLegacyWorkoutExercises(workouts, exerciseRowsByWorkoutId) 
 
 function mergeWorkoutWithExercises(workout, exerciseRowsByWorkoutId) {
   const exerciseRows = exerciseRowsByWorkoutId.get(workout.id) || [];
+  const fallbackExercises = normalizeWorkoutExercises(workout.exercises);
+  const fallbackExercisesBySortOrder = new Map(fallbackExercises.map((exercise, index) => [exercise.sort_order ?? index, exercise]));
   const normalizedExercises = exerciseRows.length > 0
-    ? fromSupabaseWorkoutExerciseRows(exerciseRows)
-    : normalizeWorkoutExercises(workout.exercises);
+    ? fromSupabaseWorkoutExerciseRows(exerciseRows).map((exercise, index) => {
+      const fallbackExercise = fallbackExercisesBySortOrder.get(exercise.sort_order ?? index);
+      if (!fallbackExercise?.client_key) return exercise;
+      return {
+        ...exercise,
+        client_key: fallbackExercise.client_key,
+      };
+    })
+    : fallbackExercises;
   return {
     ...workout,
     exercises: normalizedExercises,
