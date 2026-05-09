@@ -75,28 +75,49 @@ const AuthenticatedApp = () => {
       return;
     }
 
+    let cancelled = false;
+    const timeoutId = window.setTimeout(() => {
+      if (!cancelled) {
+        console.error('[App] Username check timed out. Continuing without blocking the app.');
+        setCheckingUsername(false);
+      }
+    }, 5000);
+
     import('./lib/userService')
       .then(({ getLocalUser }) => {
+        if (cancelled) return;
         const local = getLocalUser();
         if (local.displayName && local.displayName.trim().length >= 4) {
+          window.clearTimeout(timeoutId);
           setCheckingUsername(false);
           return;
         }
 
         getCurrentAuthUser().then((currentUser) => {
+          if (cancelled) return;
           const name = currentUser?.profile_name || currentUser?.displayName;
           if (!name || name.trim().length < 4) {
             setNeedsUsername(true);
           }
+          window.clearTimeout(timeoutId);
           setCheckingUsername(false);
         }).catch(() => {
+          if (cancelled) return;
+          window.clearTimeout(timeoutId);
           setNeedsUsername(true);
           setCheckingUsername(false);
         });
       })
       .catch(() => {
+        if (cancelled) return;
+        window.clearTimeout(timeoutId);
         setCheckingUsername(false);
       });
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
   }, [authError, isLoadingAuth, isLoadingPublicSettings, user]);
 
   if (isLoadingPublicSettings || isLoadingAuth || checkingUsername) {

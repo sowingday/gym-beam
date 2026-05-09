@@ -354,7 +354,7 @@ export default function Training() {
   const openEdit = (idx) => {
     const exercise = exercisesRef.current[idx];
     setEditWeight(exercise?.weight_kg != null ? String(exercise.weight_kg) : '');
-    setEditReps(exercise?.reps != null ? String(exercise.reps) : '');
+    setEditReps(exercise?.use_sets && exercise?.reps != null ? String(exercise.reps) : '');
     setEditIdx(idx);
   };
 
@@ -364,7 +364,7 @@ export default function Training() {
     const newWeight = editWeight && !Number.isNaN(weightValue) ? Math.min(999, Math.max(1, weightValue)) : null;
     const newReps = editReps && !Number.isNaN(repsValue) ? Math.min(999, Math.max(1, repsValue)) : null;
     const updatedExercises = exercisesRef.current.map((exercise, index) => (
-      index === editIdx ? { ...exercise, weight_kg: newWeight, reps: newReps } : exercise
+      index === editIdx ? { ...exercise, weight_kg: newWeight, reps: exercise.use_sets ? newReps : exercise.reps } : exercise
     ));
 
     exercisesRef.current = updatedExercises;
@@ -462,7 +462,7 @@ export default function Training() {
                       <StickFigureAnimation animationType={currentExercise.animation_type} exerciseIndex={currentExercise.exercise_index} size={320} color="hsl(230, 70%, 50%)" />
                     </div>
 
-                    {(currentExercise.weight_kg != null || currentExercise.reps != null) ? (
+                    {(currentExercise.weight_kg != null || (currentExercise.use_sets && currentExercise.reps != null)) ? (
                       editIdx === currentIndex ? (
                         <div className="mt-3 flex flex-col items-center gap-2">
                           {currentExercise.weight_kg != null ? (
@@ -472,7 +472,7 @@ export default function Training() {
                               <span className="text-sm text-muted-foreground">kg</span>
                             </div>
                           ) : null}
-                          {currentExercise.reps != null ? (
+                          {currentExercise.use_sets && currentExercise.reps != null ? (
                             <div className="flex items-center gap-2">
                               <label className="text-xs text-muted-foreground font-body w-12 text-right">{copy.reps}</label>
                               <input type="number" min={1} max={999} value={editReps} onChange={(e) => setEditReps(e.target.value)} className="w-20 h-8 text-center text-sm rounded-md border border-input bg-background font-body focus:outline-none focus:ring-1 focus:ring-ring" />
@@ -487,7 +487,7 @@ export default function Training() {
                       ) : (
                         <button onClick={() => openEdit(currentIndex)} className="flex items-center gap-2 mt-3 text-sm text-muted-foreground font-body hover:text-primary transition-colors">
                           {currentExercise.weight_kg != null ? <span className="flex items-center gap-1"><Dumbbell className="w-4 h-4" /><span>{currentExercise.weight_kg} kg</span></span> : null}
-                          {currentExercise.reps != null ? <span className="flex items-center gap-1"><ListOrdered className="w-4 h-4" /><span>{currentExercise.reps} x</span></span> : null}
+                          {currentExercise.use_sets && currentExercise.reps != null ? <span className="flex items-center gap-1"><ListOrdered className="w-4 h-4" /><span>{currentExercise.reps} x</span></span> : null}
                         </button>
                       )
                     ) : null}

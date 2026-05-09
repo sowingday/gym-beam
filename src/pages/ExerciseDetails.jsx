@@ -36,8 +36,10 @@ export default function ExerciseDetails() {
 
   const updateMutation = useMutation({
     mutationFn: async (data) => updateWorkout(fromWorkout, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workout', fromWorkout] });
+    onSuccess: (updatedWorkout) => {
+      if (updatedWorkout) {
+        queryClient.setQueryData(['workout', fromWorkout], updatedWorkout);
+      }
       queryClient.invalidateQueries({ queryKey: ['workouts'] });
     },
   });

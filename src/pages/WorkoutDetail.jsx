@@ -45,6 +45,7 @@ export default function WorkoutDetail() {
       setHelp: 'Sets x reps',
       weightHelp: 'Weight in kg (1-999, empty = none)',
       ok: 'Ok',
+      cancel: 'Cancel',
       minutes: 'm',
       seconds: 's',
     }
@@ -64,6 +65,7 @@ export default function WorkoutDetail() {
       setHelp: 'Sätze x Wiederholungen',
       weightHelp: 'Gewicht in kg (1-999, leer = keins)',
       ok: 'Ok',
+      cancel: 'Abbrechen',
       minutes: 'm',
       seconds: 's',
     };
@@ -102,8 +104,10 @@ export default function WorkoutDetail() {
       }
       queryClient.setQueryData(['workout', id], (current) => (current ? { ...current, ...data } : current));
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workout', id] });
+    onSuccess: (updatedWorkout) => {
+      if (updatedWorkout) {
+        queryClient.setQueryData(['workout', id], updatedWorkout);
+      }
       queryClient.invalidateQueries({ queryKey: ['workouts'] });
     },
   });
@@ -304,7 +308,10 @@ export default function WorkoutDetail() {
                                       </div>
                                     </>
                                   )}
-                                  <Button size="sm" className="w-full h-8" onClick={() => handleExerciseSave(index)}>{copy.ok}</Button>
+                                  <div className="flex gap-2">
+                                    <Button size="sm" variant="outline" className="h-8 flex-1" onClick={() => setEditIndex(null)}>{copy.cancel}</Button>
+                                    <Button size="sm" className="h-8 flex-1" onClick={() => handleExerciseSave(index)}>{copy.ok}</Button>
+                                  </div>
                                 </PopoverContent>
                               </Popover>
 
@@ -318,7 +325,10 @@ export default function WorkoutDetail() {
                                 <PopoverContent className="w-48 p-3" onClick={(e) => e.stopPropagation()}>
                                   <p className="text-xs text-muted-foreground mb-2">{copy.weightHelp}</p>
                                   <Input type="number" min={1} max={999} value={editWeight} placeholder="kg" onChange={(e) => setEditWeight(e.target.value)} className="h-8 text-sm mb-2 text-center" onKeyDown={(e) => { if (e.key === 'Enter') handleWeightSave(index); }} autoFocus />
-                                  <Button size="sm" className="w-full h-8" onClick={() => handleWeightSave(index)}>{copy.ok}</Button>
+                                  <div className="flex gap-2">
+                                    <Button size="sm" variant="outline" className="h-8 flex-1" onClick={() => setEditWeightIdx(null)}>{copy.cancel}</Button>
+                                    <Button size="sm" className="h-8 flex-1" onClick={() => handleWeightSave(index)}>{copy.ok}</Button>
+                                  </div>
                                 </PopoverContent>
                               </Popover>
                             </div>

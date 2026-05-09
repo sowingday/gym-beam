@@ -27,21 +27,36 @@ export const AuthProvider = ({ children }) => {
   const [authSource, setAuthSource] = useState(null);
   const [authFlowMode, setAuthFlowMode] = useState(() => (isRecoveryUrl() ? 'password-recovery' : null));
 
+  const synchronizeAuthenticatedUser = useCallback(async () => {
+    try {
+      const { ensureCurrentSupabaseProfile } = await import('./userService');
+      await ensureCurrentSupabaseProfile();
+      await processSyncQueue();
+    } catch (error) {
+      console.error('[AuthContext] Deferred auth synchronization failed.', error);
+    }
+  }, []);
+
   const checkUserAuth = useCallback(async () => {
     setIsLoadingAuth(true);
     try {
       const currentUser = await getSupabaseAuthUser();
       if (currentUser) {
-        const { ensureCurrentSupabaseProfile } = await import('./userService');
-        await ensureCurrentSupabaseProfile();
-        await processSyncQueue();
+        setUser(currentUser);
+        setIsAuthenticated(true);
+        setAuthSource('supabase');
+        setAuthError(null);
+        setAuthChecked(true);
+        void synchronizeAuthenticatedUser();
+        return currentUser;
       }
-      setUser(currentUser);
-      setIsAuthenticated(Boolean(currentUser));
-      setAuthSource(currentUser ? 'supabase' : null);
+
+      setUser(null);
+      setIsAuthenticated(false);
+      setAuthSource(null);
       setAuthError(null);
       setAuthChecked(true);
-      return currentUser;
+      return null;
     } catch (error) {
       setUser(null);
       setIsAuthenticated(false);
@@ -55,7 +70,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setIsLoadingAuth(false);
     }
-  }, []);
+  }, [synchronizeAuthenticatedUser]);
 
   const checkAppState = useCallback(async () => {
     if (!hasSupabaseConfig || !supabase) {
@@ -97,9 +112,7 @@ export const AuthProvider = ({ children }) => {
 
       const normalizedUser = await getSupabaseAuthUser();
       if (normalizedUser) {
-        const { ensureCurrentSupabaseProfile } = await import('./userService');
-        await ensureCurrentSupabaseProfile();
-        await processSyncQueue();
+        void synchronizeAuthenticatedUser();
       }
       setUser(normalizedUser);
       setIsAuthenticated(Boolean(normalizedUser));
@@ -110,7 +123,7 @@ export const AuthProvider = ({ children }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [synchronizeAuthenticatedUser]);
 
   useEffect(() => {
     const handleOnline = () => {

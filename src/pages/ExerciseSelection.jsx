@@ -38,8 +38,10 @@ export default function ExerciseSelection() {
 
   const updateMutation = useMutation({
     mutationFn: async (data) => updateWorkout(workoutId, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workout', workoutId] });
+    onSuccess: (updatedWorkout) => {
+      if (updatedWorkout) {
+        queryClient.setQueryData(['workout', workoutId], updatedWorkout);
+      }
       queryClient.invalidateQueries({ queryKey: ['workouts'] });
     },
   });
