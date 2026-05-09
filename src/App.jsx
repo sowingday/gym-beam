@@ -2,8 +2,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "sonner";
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClientInstance } from '@/lib/query-client';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { App as CapacitorApp } from '@capacitor/app';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -27,6 +29,39 @@ import UsernameSetupDialog from './components/UsernameSetupDialog';
 import AuthScreen from './components/AuthScreen';
 import { LanguageProvider } from './lib/i18n';
 import { getCurrentAuthUser } from './lib/authClient';
+
+const AndroidBackHandler = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (Capacitor.getPlatform() !== 'android') return undefined;
+
+    let listenerHandle = null;
+    let disposed = false;
+
+    CapacitorApp.addListener('backButton', () => {
+      if (location.pathname !== '/') {
+        navigate(-1);
+        return;
+      }
+      CapacitorApp.exitApp();
+    }).then((handle) => {
+      if (disposed) {
+        handle.remove();
+        return;
+      }
+      listenerHandle = handle;
+    });
+
+    return () => {
+      disposed = true;
+      listenerHandle?.remove();
+    };
+  }, [location.pathname, navigate]);
+
+  return null;
+};
 
 const AuthenticatedApp = () => {
   const { isAuthenticated, isLoadingAuth, isLoadingPublicSettings, authError, user, authFlowMode } = useAuth();
@@ -118,6 +153,7 @@ function App() {
       <AuthProvider>
         <QueryClientProvider client={queryClientInstance}>
           <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <AndroidBackHandler />
             <AuthenticatedApp />
           </Router>
           <Toaster />

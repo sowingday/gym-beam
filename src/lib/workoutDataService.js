@@ -2,7 +2,7 @@ import { normalizeTemplates, normalizeWorkouts } from './normalize';
 import { LOCAL_TEMPLATES } from './localTemplates';
 import { localWorkouts } from './localWorkouts';
 import { enqueueSyncOperation, processSyncQueue, resolveWorkoutId } from './offlineSync';
-import { fromSupabaseWorkoutExerciseRows, normalizeWorkoutExercises, toSupabaseWorkoutExerciseRows } from './workoutExerciseStore';
+import { fromSupabaseWorkoutExerciseRows, normalizeWorkoutExercises, reindexWorkoutExercises, toSupabaseWorkoutExerciseRows } from './workoutExerciseStore';
 import { ensureCurrentSupabaseProfile } from './userService';
 import { hasSupabaseConfig, supabase } from './supabaseClient';
 import { getSessionById, getSessionsAsAchievements, getSessionsAsExerciseLogs, updateSession } from './workoutHistory';
@@ -22,7 +22,7 @@ function parseJsonValue(value, fallback) {
 }
 
 function toSupabaseWorkoutRow(userId, data) {
-  const normalizedExercises = normalizeWorkoutExercises(data.exercises);
+  const normalizedExercises = reindexWorkoutExercises(data.exercises);
   return {
     user_id: userId,
     name: data.name,
@@ -161,12 +161,13 @@ async function replaceSupabaseWorkoutExercises(workoutId, exercises) {
   if (!supabase || !workoutId) return [];
 
   const normalizedExercises = normalizeWorkoutExercises(exercises);
+  const reindexedExercises = reindexWorkoutExercises(normalizedExercises);
   const { error: deleteError } = await supabase.from('workout_exercises').delete().eq('workout_id', workoutId);
   if (deleteError) throw deleteError;
 
-  if (normalizedExercises.length === 0) return normalizedExercises;
+  if (reindexedExercises.length === 0) return reindexedExercises;
 
-  const rows = toSupabaseWorkoutExerciseRows(workoutId, normalizedExercises);
+  const rows = toSupabaseWorkoutExerciseRows(workoutId, reindexedExercises);
   const { data, error } = await supabase.from('workout_exercises').insert(rows).select('*');
   if (error) throw error;
   return fromSupabaseWorkoutExerciseRows(data);
@@ -302,7 +303,7 @@ export async function updateWorkout(id, data) {
   try {
     const userId = await getSupabaseUserId();
     if (userId && hasSupabaseConfig && supabase) {
-      const nextExercises = data.exercises === undefined ? undefined : normalizeWorkoutExercises(data.exercises);
+      const nextExercises = data.exercises === undefined ? undefined : reindexWorkoutExercises(data.exercises);
       const patch = {
         name: data.name,
         color: data.color,

@@ -11,6 +11,7 @@ import { getLocalExercises } from '../lib/localExercises';
 import { toast } from 'sonner';
 import { useI18n } from '../lib/i18n';
 import { getWorkoutById, updateWorkout } from '../lib/workoutDataService';
+import { reindexWorkoutExercises } from '../lib/workoutExerciseStore';
 
 export default function ExerciseDetails() {
   const { id } = useParams();
@@ -72,11 +73,14 @@ export default function ExerciseDetails() {
       : [...currentExercises, newEntry];
 
     updateMutation.mutate(
-      { exercises: updatedExercises },
+      { exercises: reindexWorkoutExercises(updatedExercises) },
       {
         onSuccess: () => {
           toast.success(t('exercises.added', { name: exercise.name }));
           navigate(`/workout/${fromWorkout}`);
+        },
+        onError: () => {
+          toast.error(language === 'en' ? 'Exercise could not be added.' : 'Übung konnte nicht hinzugefügt werden.');
         },
         onSettled: () => setAdding(false),
       },

@@ -8,6 +8,14 @@ const buildGradlePath = path.join(
   'capacitor-cordova-android-plugins',
   'build.gradle',
 );
+const capacitorAppBuildGradlePath = path.join(
+  projectRoot,
+  'node_modules',
+  '@capacitor',
+  'app',
+  'android',
+  'build.gradle',
+);
 
 const originalFlatDirBlock = `repositories {
     google()
@@ -57,24 +65,38 @@ def flatDirRepos = localLibDirs.findAll { dir ->
 
 `;
 
-async function main() {
-  const original = await readFile(buildGradlePath, 'utf8');
-  let updated = original;
+const legacyProguardLine = `            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'`;
+const supportedProguardLine = `            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'`;
 
-  if (!updated.includes('def flatDirRepos = localLibDirs.findAll')) {
-    updated = updated.replace('buildscript {\n', `${helperBlock}buildscript {\n`);
-  }
-
-  updated = updated.replace(originalFlatDirBlock, patchedFlatDirBlock);
-  updated = updated.replace(originalDependenciesBlock, patchedDependenciesBlock);
+async function patchFile(filePath, transform) {
+  const original = await readFile(filePath, 'utf8');
+  const updated = transform(original);
 
   if (updated !== original) {
-    await writeFile(buildGradlePath, updated, 'utf8');
-    console.log(`Patched ${buildGradlePath}`);
-    return;
+    await writeFile(filePath, updated, 'utf8');
+    console.log(`Patched ${filePath}`);
+    return true;
   }
 
-  console.log(`No patch needed for ${buildGradlePath}`);
+  console.log(`No patch needed for ${filePath}`);
+  return false;
+}
+
+async function main() {
+  await patchFile(buildGradlePath, (original) => {
+    let updated = original;
+
+    if (!updated.includes('def flatDirRepos = localLibDirs.findAll')) {
+      updated = updated.replace('buildscript {\n', `${helperBlock}buildscript {\n`);
+    }
+
+    updated = updated.replace(originalFlatDirBlock, patchedFlatDirBlock);
+    updated = updated.replace(originalDependenciesBlock, patchedDependenciesBlock);
+    return updated;
+  });
+
+  await patchFile(capacitorAppBuildGradlePath, (original) =>
+    original.replace(legacyProguardLine, supportedProguardLine));
 }
 
 main().catch((error) => {

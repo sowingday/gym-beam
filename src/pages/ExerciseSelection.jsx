@@ -9,6 +9,8 @@ import { getFavoriteIds, toggleFavorite } from '../lib/favorites';
 import { getExerciseKey } from '../lib/normalize';
 import { useI18n } from '../lib/i18n';
 import { getWorkoutById, updateWorkout } from '../lib/workoutDataService';
+import { reindexWorkoutExercises } from '../lib/workoutExerciseStore';
+import { toast } from 'sonner';
 
 export default function ExerciseSelection() {
   const { workoutId } = useParams();
@@ -86,8 +88,13 @@ export default function ExerciseSelection() {
     });
 
     updateMutation.mutate(
-      { exercises: [...currentExercises, ...newEntries] },
-      { onSuccess: () => navigate(`/workout/${workoutId}`) },
+      { exercises: reindexWorkoutExercises([...currentExercises, ...newEntries]) },
+      {
+        onSuccess: () => navigate(`/workout/${workoutId}`),
+        onError: () => {
+          toast.error(language === 'en' ? 'Exercises could not be added.' : 'Übungen konnten nicht hinzugefügt werden.');
+        },
+      },
     );
   };
 

@@ -14,6 +14,7 @@ import { getBreakDuration } from '../lib/settings';
 import { localWorkouts } from '../lib/localWorkouts';
 import { useI18n } from '../lib/i18n';
 import { getWorkoutById, updateWorkout } from '../lib/workoutDataService';
+import { reindexWorkoutExercises } from '../lib/workoutExerciseStore';
 
 function computeTotals(exercises, breakDuration) {
   const durationExercises = exercises.filter((exercise) => !exercise.use_sets);
@@ -116,13 +117,14 @@ export default function WorkoutDetail() {
     const items = Array.from(exercises);
     const [moved] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, moved);
-    queryClient.setQueryData(['workout', id], { ...workout, exercises: items });
-    updateMutation.mutate({ exercises: items });
+    const reindexedItems = reindexWorkoutExercises(items);
+    queryClient.setQueryData(['workout', id], { ...workout, exercises: reindexedItems });
+    updateMutation.mutate({ exercises: reindexedItems });
   };
 
   const handleDeleteExercise = () => {
     if (deleteIndex === null) return;
-    updateMutation.mutate({ exercises: exercises.filter((_, index) => index !== deleteIndex) });
+    updateMutation.mutate({ exercises: reindexWorkoutExercises(exercises.filter((_, index) => index !== deleteIndex)) });
     setDeleteIndex(null);
   };
 
@@ -155,7 +157,7 @@ export default function WorkoutDetail() {
         reps: Math.max(1, parseInt(editReps, 10) || 1),
       };
     }
-    updateMutation.mutate({ exercises: updated });
+    updateMutation.mutate({ exercises: reindexWorkoutExercises(updated) });
     setEditIndex(null);
   };
 
@@ -169,7 +171,7 @@ export default function WorkoutDetail() {
     const updated = [...exercises];
     const value = parseFloat(editWeight);
     updated[index] = { ...updated[index], weight_kg: !editWeight || Number.isNaN(value) ? null : Math.min(999, Math.max(1, value)) };
-    updateMutation.mutate({ exercises: updated });
+    updateMutation.mutate({ exercises: reindexWorkoutExercises(updated) });
     setEditWeightIdx(null);
   };
 

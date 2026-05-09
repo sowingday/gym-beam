@@ -22,7 +22,7 @@ export function normalizeWorkoutExercise(exercise, index = 0) {
     reps: exercise.reps != null ? Math.max(1, toFiniteInteger(exercise.reps, 10)) : 10,
     weight_kg: exercise.weight_kg != null ? toFiniteNumber(exercise.weight_kg, null) : null,
     animation_type: exercise.animation_type || '',
-    sort_order: exercise.sort_order != null ? toFiniteInteger(exercise.sort_order, index) : index,
+    sort_order: index,
   };
 }
 
@@ -30,8 +30,15 @@ export function normalizeWorkoutExercises(exercises) {
   return (Array.isArray(exercises) ? exercises : []).map((exercise, index) => normalizeWorkoutExercise(exercise, index));
 }
 
-export function toSupabaseWorkoutExerciseRows(workoutId, exercises) {
+export function reindexWorkoutExercises(exercises) {
   return normalizeWorkoutExercises(exercises).map((exercise, index) => ({
+    ...exercise,
+    sort_order: index,
+  }));
+}
+
+export function toSupabaseWorkoutExerciseRows(workoutId, exercises) {
+  return reindexWorkoutExercises(exercises).map((exercise, index) => ({
     workout_id: workoutId,
     exercise_index: exercise.exercise_index,
     exercise_id: exercise.exercise_id,
@@ -43,7 +50,7 @@ export function toSupabaseWorkoutExerciseRows(workoutId, exercises) {
     reps: exercise.use_sets ? (exercise.reps ?? 10) : (exercise.reps ?? null),
     weight_kg: exercise.weight_kg ?? null,
     animation_type: exercise.animation_type || null,
-    sort_order: exercise.sort_order ?? index,
+    sort_order: index,
   }));
 }
 

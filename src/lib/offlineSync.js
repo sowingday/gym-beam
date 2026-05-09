@@ -2,7 +2,7 @@ import { getSupabaseAuthUser } from './authClient';
 import { localWorkouts } from './localWorkouts';
 import { queryClientInstance } from './query-client';
 import { hasSupabaseConfig, supabase } from './supabaseClient';
-import { fromSupabaseWorkoutExerciseRows, normalizeWorkoutExercises, toSupabaseWorkoutExerciseRows } from './workoutExerciseStore';
+import { fromSupabaseWorkoutExerciseRows, normalizeWorkoutExercises, reindexWorkoutExercises, toSupabaseWorkoutExerciseRows } from './workoutExerciseStore';
 import { getSessionById, updateSession } from './workoutHistory';
 
 const QUEUE_KEY = 'wb_sync_queue';
@@ -86,7 +86,7 @@ function replaceQueuedWorkoutReferences(queue, oldId, newId) {
 }
 
 function toSupabaseWorkoutRow(userId, data) {
-  const normalizedExercises = normalizeWorkoutExercises(data.exercises);
+  const normalizedExercises = reindexWorkoutExercises(data.exercises);
   return {
     user_id: userId,
     name: data.name,
@@ -109,7 +109,7 @@ function fromSupabaseWorkoutRow(row) {
 }
 
 async function replaceSupabaseWorkoutExercises(workoutId, exercises) {
-  const normalizedExercises = normalizeWorkoutExercises(exercises);
+  const normalizedExercises = reindexWorkoutExercises(exercises);
   const { error: deleteError } = await supabase.from('workout_exercises').delete().eq('workout_id', workoutId);
   if (deleteError) throw deleteError;
 
@@ -303,7 +303,7 @@ async function processWorkoutUpdate(userId, payload) {
     color: payload.data.color,
     weekday: payload.data.weekday,
     weekdays: Array.isArray(payload.data.weekdays) ? payload.data.weekdays : payload.data.weekdays === undefined ? undefined : [],
-    exercises: payload.data.exercises === undefined ? undefined : normalizeWorkoutExercises(payload.data.exercises),
+    exercises: payload.data.exercises === undefined ? undefined : reindexWorkoutExercises(payload.data.exercises),
     sort_order: payload.data.sort_order,
     workout_number: payload.data.workout_number,
   };
@@ -325,7 +325,7 @@ async function processWorkoutUpdate(userId, payload) {
   if (payload.workoutId !== workoutId) {
     const nextExercises = payload.data.exercises === undefined
       ? fromSupabaseWorkoutRow(updated).exercises
-      : normalizeWorkoutExercises(payload.data.exercises);
+      : reindexWorkoutExercises(payload.data.exercises);
     localWorkouts.replaceId(payload.workoutId, { ...fromSupabaseWorkoutRow(updated), exercises: nextExercises });
   }
 }
