@@ -25,10 +25,38 @@ function computeTotals(exercises, breakDuration) {
 
 function getDraggableItemStyle(style, isDropAnimating) {
   if (!style) return undefined;
-  if (!isDropAnimating) return style;
+  const transform = style.transform ? `${style.transform} translateZ(0)` : 'translateZ(0)';
+  if (isDropAnimating) {
+    return {
+      ...style,
+      transform,
+      transitionDuration: '0.001s',
+      transitionTimingFunction: 'linear',
+      opacity: 1,
+      willChange: 'auto',
+      backfaceVisibility: 'hidden',
+      WebkitBackfaceVisibility: 'hidden',
+      transformStyle: 'preserve-3d',
+      contain: 'paint',
+    };
+  }
   return {
     ...style,
-    transitionDuration: '120ms',
+    transform,
+    willChange: 'transform',
+    backfaceVisibility: 'hidden',
+    WebkitBackfaceVisibility: 'hidden',
+    transformStyle: 'preserve-3d',
+    contain: 'paint',
+  };
+}
+
+function patchSecondaryItemStyle(style, disableTransition) {
+  if (!style || !disableTransition) return style;
+  return {
+    ...style,
+    transition: 'none',
+    transitionDuration: '0.001s',
   };
 }
 
@@ -51,6 +79,145 @@ function areExercisesEquivalent(currentExercises = [], nextExercises = []) {
       && exercise.sort_order === nextExercise.sort_order;
   });
 }
+
+function getExerciseKey(exercise, fallbackIndex = 0) {
+  return exercise?.client_key || `${exercise?.exercise_id || exercise?.exercise_index || 'exercise'}-${fallbackIndex}`;
+}
+
+const WorkoutExerciseRow = React.memo(function WorkoutExerciseRow({
+  exercise,
+  exerciseKey,
+  dragHandleProps,
+  snapshot,
+  copy,
+  disableTransition,
+  isEditOpen,
+  isWeightOpen,
+  editMode,
+  editMin,
+  editSec,
+  editSets,
+  editReps,
+  editWeight,
+  onNavigate,
+  onOpenExerciseEdit,
+  onCloseExerciseEdit,
+  onSetEditMode,
+  onSetEditMin,
+  onSetEditSec,
+  onSetEditSets,
+  onSetEditReps,
+  onSaveExercise,
+  onOpenWeightEdit,
+  onCloseWeightEdit,
+  onSetEditWeight,
+  onSaveWeight,
+  onDelete,
+}) {
+  return (
+    <div
+      className={`flex items-center gap-2 px-3 py-2 border-b border-border/50 [transform:translateZ(0)] [backface-visibility:hidden] [contain:paint] ${snapshot.isDropAnimating ? '' : 'transition-colors'} ${snapshot.isDragging ? 'bg-primary/5 shadow-lg' : 'hover:bg-muted/30'}`}
+      onClick={() => onNavigate(exercise)}
+      style={disableTransition ? { transition: 'none' } : undefined}
+    >
+      <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing text-muted-foreground/50 hover:text-muted-foreground shrink-0" onClick={(e) => e.stopPropagation()}>
+        <GripVertical className="w-4 h-4" />
+      </div>
+
+      <div className="shrink-0 w-24 h-24 flex items-center justify-center overflow-hidden rounded-lg">
+        <StickFigureAnimation animationType={exercise.animation_type} exerciseIndex={exercise.exercise_index} size={96} color="hsl(230, 70%, 50%)" />
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-bold text-foreground truncate hover:text-primary transition-colors">{exercise.name}</div>
+        <div className="flex items-center mt-0.5" onClick={(e) => e.stopPropagation()}>
+          <Popover open={isEditOpen} onOpenChange={(open) => { if (!open) onCloseExerciseEdit(); }}>
+            <PopoverTrigger asChild>
+              <button className="flex items-center gap-1 text-primary/70 hover:text-primary min-w-[72px]" onClick={(e) => onOpenExerciseEdit(exerciseKey, exercise, e)}>
+                {exercise.use_sets
+                  ? <><ListOrdered className="w-3 h-3 shrink-0" /><span className="text-yellow-700 text-xs font-semibold">{exercise.sets || 3}x{exercise.reps || 10}</span></>
+                  : <><Clock className="w-3 h-3 shrink-0" /><span className="text-xs font-semibold text-accent tabular-nums">{Math.floor((exercise.duration || 90) / 60) > 0 ? `${Math.floor((exercise.duration || 90) / 60)}m ` : ''}{String((exercise.duration || 90) % 60).padStart(2, '0')}s</span></>}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-3" onClick={(e) => e.stopPropagation()}>
+              <div className="flex rounded-lg overflow-hidden border border-border mb-3">
+                <button className={`flex-1 py-1.5 text-xs font-body flex items-center justify-center gap-1 transition-colors ${editMode === 'dur' ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted/50'}`} onClick={() => onSetEditMode('dur')}>
+                  <Clock className="w-3 h-3" /> {copy.durationMode}
+                </button>
+                <button className={`flex-1 py-1.5 text-xs font-body flex items-center justify-center gap-1 transition-colors ${editMode === 'sets' ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted/50'}`} onClick={() => onSetEditMode('sets')}>
+                  <ListOrdered className="w-3 h-3" /> {copy.setMode}
+                </button>
+              </div>
+
+              {editMode === 'dur' ? (
+                <>
+                  <p className="text-xs text-muted-foreground mb-2">{copy.durationHelp}</p>
+                  <div className="flex items-center gap-1.5 mb-3">
+                    <Input type="number" min={0} max={99} value={editMin} onChange={(e) => onSetEditMin(e.target.value)} className="h-8 text-sm w-16 text-center" onKeyDown={(e) => { if (e.key === 'Enter') onSaveExercise(exerciseKey); }} />
+                    <span className="text-sm text-muted-foreground">{copy.minutes}</span>
+                    <Input type="number" min={0} max={59} value={editSec} onChange={(e) => onSetEditSec(e.target.value)} className="h-8 text-sm w-16 text-center" onKeyDown={(e) => { if (e.key === 'Enter') onSaveExercise(exerciseKey); }} />
+                    <span className="text-sm text-muted-foreground">{copy.seconds}</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-xs text-muted-foreground mb-2">{copy.setHelp}</p>
+                  <div className="flex items-center gap-1.5 mb-3">
+                    <Input type="number" min={1} max={99} value={editSets} onChange={(e) => onSetEditSets(e.target.value)} className="h-8 text-sm w-16 text-center" onKeyDown={(e) => { if (e.key === 'Enter') onSaveExercise(exerciseKey); }} />
+                    <span className="text-sm text-muted-foreground">x</span>
+                    <Input type="number" min={1} max={999} value={editReps} onChange={(e) => onSetEditReps(e.target.value)} className="h-8 text-sm w-16 text-center" onKeyDown={(e) => { if (e.key === 'Enter') onSaveExercise(exerciseKey); }} />
+                  </div>
+                </>
+              )}
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" className="h-8 flex-1" onClick={onCloseExerciseEdit}>{copy.cancel}</Button>
+                <Button size="sm" className="h-8 flex-1" onClick={() => onSaveExercise(exerciseKey)}>{copy.ok}</Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          <Popover open={isWeightOpen} onOpenChange={(open) => { if (!open) onCloseWeightEdit(); }}>
+            <PopoverTrigger asChild>
+              <button className="flex items-center gap-1 text-muted-foreground hover:text-primary ml-3" onClick={(e) => onOpenWeightEdit(exerciseKey, exercise, e)}>
+                <Dumbbell className="w-3 h-3 shrink-0" />
+                {exercise.weight_kg != null ? <span className="text-yellow-700 text-xs font-semibold">{exercise.weight_kg} kg</span> : <span className="text-[10px] text-muted-foreground/50">-</span>}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-3" onClick={(e) => e.stopPropagation()}>
+              <p className="text-xs text-muted-foreground mb-2">{copy.weightHelp}</p>
+              <Input type="number" min={1} max={999} value={editWeight} placeholder="kg" onChange={(e) => onSetEditWeight(e.target.value)} className="h-8 text-sm mb-2 text-center" onKeyDown={(e) => { if (e.key === 'Enter') onSaveWeight(exerciseKey); }} autoFocus />
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" className="h-8 flex-1" onClick={onCloseWeightEdit}>{copy.cancel}</Button>
+                <Button size="sm" className="h-8 flex-1" onClick={() => onSaveWeight(exerciseKey)}>{copy.ok}</Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
+
+      <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0 hidden sm:inline">{exercise.category}</span>
+
+      <button onClick={(e) => { e.stopPropagation(); onDelete(exerciseKey); }} className="text-muted-foreground/40 hover:text-destructive transition-colors p-1 shrink-0">
+        <Trash2 className="w-4 h-4" />
+      </button>
+    </div>
+  );
+}, (prevProps, nextProps) => (
+  prevProps.exercise === nextProps.exercise
+  && prevProps.snapshot.isDragging === nextProps.snapshot.isDragging
+  && prevProps.snapshot.isDropAnimating === nextProps.snapshot.isDropAnimating
+  && prevProps.disableTransition === nextProps.disableTransition
+  && prevProps.isEditOpen === nextProps.isEditOpen
+  && prevProps.isWeightOpen === nextProps.isWeightOpen
+  && (!nextProps.isEditOpen || (
+    prevProps.editMode === nextProps.editMode
+    && prevProps.editMin === nextProps.editMin
+    && prevProps.editSec === nextProps.editSec
+    && prevProps.editSets === nextProps.editSets
+    && prevProps.editReps === nextProps.editReps
+  ))
+  && (!nextProps.isWeightOpen || prevProps.editWeight === nextProps.editWeight)
+));
 
 export default function WorkoutDetail() {
   const { id } = useParams();
@@ -99,17 +266,18 @@ export default function WorkoutDetail() {
       seconds: 's',
     };
 
-  const [deleteIndex, setDeleteIndex] = useState(null);
-  const [editIndex, setEditIndex] = useState(null);
+  const [deleteExerciseKey, setDeleteExerciseKey] = useState(null);
+  const [editExerciseKey, setEditExerciseKey] = useState(null);
   const [editMode, setEditMode] = useState('dur');
   const [editMin, setEditMin] = useState(0);
   const [editSec, setEditSec] = useState(0);
   const [editSets, setEditSets] = useState(3);
   const [editReps, setEditReps] = useState(10);
-  const [editWeightIdx, setEditWeightIdx] = useState(null);
+  const [editWeightExerciseKey, setEditWeightExerciseKey] = useState(null);
   const [editWeight, setEditWeight] = useState('');
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState('');
+  const [isReorderSettling, setIsReorderSettling] = useState(false);
 
   const { data: workout, isLoading } = useQuery({
     queryKey: ['workout', id],
@@ -158,24 +326,36 @@ export default function WorkoutDetail() {
   });
 
   const exercises = workout?.exercises || [];
+  const getExerciseIndexByKey = (exerciseKey) => exercises.findIndex((exercise, index) => getExerciseKey(exercise, index) === exerciseKey);
   const breakDuration = getBreakDuration();
   const { totalSecs, totalSets } = computeTotals(exercises, breakDuration);
 
   const handleDragEnd = (result) => {
     if (!result.destination || result.source.index === result.destination.index) return;
+    setIsReorderSettling(true);
     const items = Array.from(exercises);
     const [moved] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, moved);
     updateMutation.mutate({ exercises: items });
   };
 
+  useEffect(() => {
+    if (!isReorderSettling) return undefined;
+    const timeoutId = window.setTimeout(() => {
+      setIsReorderSettling(false);
+    }, 80);
+    return () => window.clearTimeout(timeoutId);
+  }, [isReorderSettling]);
+
   const handleDeleteExercise = () => {
-    if (deleteIndex === null) return;
+    if (!deleteExerciseKey) return;
+    const deleteIndex = getExerciseIndexByKey(deleteExerciseKey);
+    if (deleteIndex === -1) return;
     updateMutation.mutate({ exercises: reindexWorkoutExercises(exercises.filter((_, index) => index !== deleteIndex)) });
-    setDeleteIndex(null);
+    setDeleteExerciseKey(null);
   };
 
-  const openExerciseEdit = (index, exercise, event) => {
+  const openExerciseEdit = (exerciseKey, exercise, event) => {
     event.stopPropagation();
     if (exercise.use_sets) {
       setEditMode('sets');
@@ -187,10 +367,12 @@ export default function WorkoutDetail() {
       setEditMin(Math.floor(duration / 60));
       setEditSec(duration % 60);
     }
-    setEditIndex(index);
+    setEditExerciseKey(exerciseKey);
   };
 
-  const handleExerciseSave = (index) => {
+  const handleExerciseSave = (exerciseKey) => {
+    const index = getExerciseIndexByKey(exerciseKey);
+    if (index === -1) return;
     const updated = [...exercises];
     if (editMode === 'dur') {
       const total = (parseInt(editMin, 10) || 0) * 60 + (parseInt(editSec, 10) || 0);
@@ -205,21 +387,27 @@ export default function WorkoutDetail() {
       };
     }
     updateMutation.mutate({ exercises: reindexWorkoutExercises(updated) });
-    setEditIndex(null);
+    setEditExerciseKey(null);
   };
 
-  const openWeightEdit = (index, exercise, event) => {
+  const openWeightEdit = (exerciseKey, exercise, event) => {
     event.stopPropagation();
     setEditWeight(exercise.weight_kg != null ? String(exercise.weight_kg) : '');
-    setEditWeightIdx(index);
+    setEditWeightExerciseKey(exerciseKey);
   };
 
-  const handleWeightSave = (index) => {
+  const handleWeightSave = (exerciseKey) => {
+    const index = getExerciseIndexByKey(exerciseKey);
+    if (index === -1) return;
     const updated = [...exercises];
     const value = parseFloat(editWeight);
     updated[index] = { ...updated[index], weight_kg: !editWeight || Number.isNaN(value) ? null : Math.min(999, Math.max(1, value)) };
     updateMutation.mutate({ exercises: reindexWorkoutExercises(updated) });
-    setEditWeightIdx(null);
+    setEditWeightExerciseKey(null);
+  };
+
+  const handleExerciseNavigate = (exercise) => {
+    navigate(`/exercise/${exercise.exercise_index || exercise.exercise_id}`);
   };
 
   const handleStartWorkout = () => {
@@ -294,97 +482,48 @@ export default function WorkoutDetail() {
               {(provided) => (
                 <div ref={provided.innerRef} {...provided.droppableProps}>
                   {exercises.map((exercise, index) => (
-                    <Draggable key={exercise.client_key || `${exercise.exercise_id}-${index}`} draggableId={exercise.client_key || `ex-${index}`} index={index}>
-                      {(dragProvided, snapshot) => (
+                    <Draggable key={getExerciseKey(exercise, index)} draggableId={getExerciseKey(exercise, index)} index={index}>
+                      {(dragProvided, snapshot) => {
+                        const disableOuterTransition = isReorderSettling && !snapshot.isDragging && !snapshot.isDropAnimating;
+                        return (
                         <div
                           ref={dragProvided.innerRef}
                           {...dragProvided.draggableProps}
-                          style={getDraggableItemStyle(dragProvided.draggableProps.style, snapshot.isDropAnimating)}
-                          className={`flex items-center gap-2 px-3 py-2 border-b border-border/50 transition-colors ${snapshot.isDragging ? 'bg-primary/5 shadow-lg' : 'hover:bg-muted/30'}`}
-                          onClick={() => navigate(`/exercise/${exercise.exercise_index || exercise.exercise_id}`)}
+                          style={patchSecondaryItemStyle(getDraggableItemStyle(dragProvided.draggableProps.style, snapshot.isDropAnimating), disableOuterTransition)}
                         >
-                          <div {...dragProvided.dragHandleProps} className="cursor-grab active:cursor-grabbing text-muted-foreground/50 hover:text-muted-foreground shrink-0" onClick={(e) => e.stopPropagation()}>
-                            <GripVertical className="w-4 h-4" />
-                          </div>
-
-                          <div className="shrink-0 w-24 h-24 flex items-center justify-center overflow-hidden rounded-lg">
-                            <StickFigureAnimation animationType={exercise.animation_type} exerciseIndex={exercise.exercise_index} size={96} color="hsl(230, 70%, 50%)" />
-                          </div>
-
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-bold text-foreground truncate hover:text-primary transition-colors">{exercise.name}</div>
-                            <div className="flex items-center mt-0.5" onClick={(e) => e.stopPropagation()}>
-                              <Popover open={editIndex === index} onOpenChange={(open) => { if (!open) setEditIndex(null); }}>
-                                <PopoverTrigger asChild>
-                                  <button className="flex items-center gap-1 text-primary/70 hover:text-primary min-w-[72px]" onClick={(e) => openExerciseEdit(index, exercise, e)}>
-                                    {exercise.use_sets
-                                      ? <><ListOrdered className="w-3 h-3 shrink-0" /><span className="text-yellow-700 text-xs font-semibold">{exercise.sets || 3}x{exercise.reps || 10}</span></>
-                                      : <><Clock className="w-3 h-3 shrink-0" /><span className="text-xs font-semibold text-accent tabular-nums">{Math.floor((exercise.duration || 90) / 60) > 0 ? `${Math.floor((exercise.duration || 90) / 60)}m ` : ''}{String((exercise.duration || 90) % 60).padStart(2, '0')}s</span></>}
-                                  </button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-64 p-3" onClick={(e) => e.stopPropagation()}>
-                                  <div className="flex rounded-lg overflow-hidden border border-border mb-3">
-                                    <button className={`flex-1 py-1.5 text-xs font-body flex items-center justify-center gap-1 transition-colors ${editMode === 'dur' ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted/50'}`} onClick={() => setEditMode('dur')}>
-                                      <Clock className="w-3 h-3" /> {copy.durationMode}
-                                    </button>
-                                    <button className={`flex-1 py-1.5 text-xs font-body flex items-center justify-center gap-1 transition-colors ${editMode === 'sets' ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted/50'}`} onClick={() => setEditMode('sets')}>
-                                      <ListOrdered className="w-3 h-3" /> {copy.setMode}
-                                    </button>
-                                  </div>
-
-                                  {editMode === 'dur' ? (
-                                    <>
-                                      <p className="text-xs text-muted-foreground mb-2">{copy.durationHelp}</p>
-                                      <div className="flex items-center gap-1.5 mb-3">
-                                        <Input type="number" min={0} max={99} value={editMin} onChange={(e) => setEditMin(e.target.value)} className="h-8 text-sm w-16 text-center" onKeyDown={(e) => { if (e.key === 'Enter') handleExerciseSave(index); }} />
-                                        <span className="text-sm text-muted-foreground">{copy.minutes}</span>
-                                        <Input type="number" min={0} max={59} value={editSec} onChange={(e) => setEditSec(e.target.value)} className="h-8 text-sm w-16 text-center" onKeyDown={(e) => { if (e.key === 'Enter') handleExerciseSave(index); }} />
-                                        <span className="text-sm text-muted-foreground">{copy.seconds}</span>
-                                      </div>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <p className="text-xs text-muted-foreground mb-2">{copy.setHelp}</p>
-                                      <div className="flex items-center gap-1.5 mb-3">
-                                        <Input type="number" min={1} max={99} value={editSets} onChange={(e) => setEditSets(e.target.value)} className="h-8 text-sm w-16 text-center" onKeyDown={(e) => { if (e.key === 'Enter') handleExerciseSave(index); }} />
-                                        <span className="text-sm text-muted-foreground">x</span>
-                                        <Input type="number" min={1} max={999} value={editReps} onChange={(e) => setEditReps(e.target.value)} className="h-8 text-sm w-16 text-center" onKeyDown={(e) => { if (e.key === 'Enter') handleExerciseSave(index); }} />
-                                      </div>
-                                    </>
-                                  )}
-                                  <div className="flex gap-2">
-                                    <Button size="sm" variant="outline" className="h-8 flex-1" onClick={() => setEditIndex(null)}>{copy.cancel}</Button>
-                                    <Button size="sm" className="h-8 flex-1" onClick={() => handleExerciseSave(index)}>{copy.ok}</Button>
-                                  </div>
-                                </PopoverContent>
-                              </Popover>
-
-                              <Popover open={editWeightIdx === index} onOpenChange={(open) => { if (!open) setEditWeightIdx(null); }}>
-                                <PopoverTrigger asChild>
-                                  <button className="flex items-center gap-1 text-muted-foreground hover:text-primary ml-3" onClick={(e) => openWeightEdit(index, exercise, e)}>
-                                    <Dumbbell className="w-3 h-3 shrink-0" />
-                                    {exercise.weight_kg != null ? <span className="text-yellow-700 text-xs font-semibold">{exercise.weight_kg} kg</span> : <span className="text-[10px] text-muted-foreground/50">-</span>}
-                                  </button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-48 p-3" onClick={(e) => e.stopPropagation()}>
-                                  <p className="text-xs text-muted-foreground mb-2">{copy.weightHelp}</p>
-                                  <Input type="number" min={1} max={999} value={editWeight} placeholder="kg" onChange={(e) => setEditWeight(e.target.value)} className="h-8 text-sm mb-2 text-center" onKeyDown={(e) => { if (e.key === 'Enter') handleWeightSave(index); }} autoFocus />
-                                  <div className="flex gap-2">
-                                    <Button size="sm" variant="outline" className="h-8 flex-1" onClick={() => setEditWeightIdx(null)}>{copy.cancel}</Button>
-                                    <Button size="sm" className="h-8 flex-1" onClick={() => handleWeightSave(index)}>{copy.ok}</Button>
-                                  </div>
-                                </PopoverContent>
-                              </Popover>
-                            </div>
-                          </div>
-
-                          <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0 hidden sm:inline">{exercise.category}</span>
-
-                          <button onClick={(e) => { e.stopPropagation(); setDeleteIndex(index); }} className="text-muted-foreground/40 hover:text-destructive transition-colors p-1 shrink-0">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <WorkoutExerciseRow
+                            exercise={exercise}
+                            exerciseKey={getExerciseKey(exercise, index)}
+                            dragHandleProps={dragProvided.dragHandleProps}
+                            snapshot={snapshot}
+                            copy={copy}
+                            disableTransition={isReorderSettling && !snapshot.isDragging}
+                            isEditOpen={editExerciseKey === getExerciseKey(exercise, index)}
+                            isWeightOpen={editWeightExerciseKey === getExerciseKey(exercise, index)}
+                            editMode={editMode}
+                            editMin={editMin}
+                            editSec={editSec}
+                            editSets={editSets}
+                            editReps={editReps}
+                            editWeight={editWeight}
+                            onNavigate={handleExerciseNavigate}
+                            onOpenExerciseEdit={openExerciseEdit}
+                            onCloseExerciseEdit={() => setEditExerciseKey(null)}
+                            onSetEditMode={setEditMode}
+                            onSetEditMin={setEditMin}
+                            onSetEditSec={setEditSec}
+                            onSetEditSets={setEditSets}
+                            onSetEditReps={setEditReps}
+                            onSaveExercise={handleExerciseSave}
+                            onOpenWeightEdit={openWeightEdit}
+                            onCloseWeightEdit={() => setEditWeightExerciseKey(null)}
+                            onSetEditWeight={setEditWeight}
+                            onSaveWeight={handleWeightSave}
+                            onDelete={setDeleteExerciseKey}
+                          />
                         </div>
-                      )}
+                        );
+                      }}
                     </Draggable>
                   ))}
                   {provided.placeholder}
@@ -402,7 +541,7 @@ export default function WorkoutDetail() {
         </div>
       </div>
 
-      <ConfirmDialog open={deleteIndex !== null} onConfirm={handleDeleteExercise} onCancel={() => setDeleteIndex(null)} />
+      <ConfirmDialog open={deleteExerciseKey !== null} onConfirm={handleDeleteExercise} onCancel={() => setDeleteExerciseKey(null)} />
     </div>
   );
 }
