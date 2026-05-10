@@ -14,7 +14,7 @@ export default function FindFriends() {
   const { t, language } = useI18n();
   const [me, setMe] = useState(null);
   const [selectMode, setSelectMode] = useState(null);
-  const shareBaseUrl = window.location.origin;
+  const shareBaseUrl = 'https://app.gym-beam.de';
   const socialAvailable = isSocialAvailable();
 
   useEffect(() => {

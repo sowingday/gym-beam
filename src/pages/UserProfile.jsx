@@ -311,7 +311,7 @@ export default function UserProfile() {
                 <h1 className="font-display text-4xl md:text-5xl tracking-wide text-foreground truncate cursor-pointer hover:text-primary transition-colors" onClick={() => setEditingName(true)} title={copy.clickToChange}>
                   {displayName || copy.guest}
                 </h1>
-                <div className="mt-2 space-y-0.5 text-sm font-body text-muted-foreground">
+                <div className="mt-1 space-y-0.5 text-sm font-body text-muted-foreground">
                   <p>{signedInSinceLabel}: {signedInSince}</p>
                   <p>{lastTrainingLabel}: {lastTraining}</p>
                 </div>

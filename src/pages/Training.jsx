@@ -55,8 +55,8 @@ export default function Training() {
       reps: 'Reps',
       save: 'Save',
       cancel: 'Cancel',
-      finish: 'FINISH!',
-      wellDone: 'WELL DONE!',
+      finish: 'Geschafft!',
+      wellDone: 'Sehr gut!',
       completed: 'completed successfully!',
       pause: 'Pause',
       resume: 'Resume',
@@ -529,7 +529,7 @@ export default function Training() {
               {completedCount} / {completedTotal} {language === 'en' ? copy.completed : `Übungen ${copy.completed}`}
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.5 }}>
-              <Button onClick={handleFinish} size="lg" className="gap-3 h-18 min-h-[4.5rem] px-10 text-xl font-display tracking-wider rounded-2xl shadow-xl bg-green-500 hover:bg-green-600 text-white shadow-green-500/30"><CheckCircle2 className="w-8 h-8" />OK</Button>
+              <Button onClick={handleFinish} size="lg" className="gap-3 h-18 min-h-[4.5rem] px-10 text-xl font-display tracking-wider rounded-2xl shadow-xl bg-green-500 hover:bg-green-600 text-white shadow-green-500/30"><CheckCircle2 className="w-10 h-10" />OK</Button>
             </motion.div>
           </div>
         ) : null}
