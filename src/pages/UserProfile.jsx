@@ -6,6 +6,7 @@ import InboxMessages from '../components/InboxMessages';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { format } from 'date-fns';
 import BottomNav from '../components/BottomNav';
 import { fetchFollows, followUser, unfollowUser } from '../lib/socialService';
 import {
@@ -16,7 +17,7 @@ import {
   saveLocalProfile,
 } from '../lib/userService';
 import { useI18n } from '../lib/i18n';
-import { upsertBodyWeightForDate } from '../lib/workoutDataService';
+import { getLatestAchievement, upsertBodyWeightForDate } from '../lib/workoutDataService';
 
 const Field = memo(({ label, required, hint, children }) => (
   <div>
@@ -38,7 +39,7 @@ function parseOptionalNumber(value) {
 export default function UserProfile() {
   const navigate = useNavigate();
   const fileRef = useRef(null);
-  const { language } = useI18n();
+  const { language, dateLocale } = useI18n();
   const copy = language === 'en'
     ? {
       nameRequired: 'Name is required.',
@@ -75,6 +76,9 @@ export default function UserProfile() {
       offlineInfo: 'Friends and followers are available once you are online.',
       displayNamePlaceholder: 'Display name (min. 4 characters)',
       clickAvatar: 'Change profile picture',
+      signedInSince: 'Signed in since',
+      lastTraining: 'Last training',
+      never: 'No training yet',
     }
     : {
       nameRequired: 'Name ist ein Pflichtfeld.',
@@ -129,6 +133,7 @@ export default function UserProfile() {
   const [nameError, setNameError] = useState('');
   const [savingName, setSavingName] = useState(false);
   const [uploadingPic, setUploadingPic] = useState(false);
+  const [lastTrainingDate, setLastTrainingDate] = useState(null);
 
   const loadUser = useCallback(async () => {
     try {
@@ -139,6 +144,8 @@ export default function UserProfile() {
       setProfileAge(user.profile_age != null ? String(user.profile_age) : '');
       setProfileHeight(user.profile_height != null ? String(user.profile_height) : '');
       setProfileWeight(user.profile_weight != null ? String(user.profile_weight) : '');
+      const latestAchievement = await getLatestAchievement().catch(() => null);
+      setLastTrainingDate(latestAchievement?.date || null);
 
       if (user._isOnline) {
         fetchFollows()
@@ -268,6 +275,11 @@ export default function UserProfile() {
   };
 
   const displayName = me?.displayName || me?.profile_name || '';
+  const signedInSinceLabel = language === 'en' ? 'Signed in since' : 'Angemeldet seit';
+  const lastTrainingLabel = language === 'en' ? 'Last training' : 'Letztes Training';
+  const neverLabel = copy.never || (language === 'en' ? 'No training yet' : 'Noch kein Training');
+  const signedInSince = me?.created_at ? format(new Date(me.created_at), 'dd. MMMM yyyy', { locale: dateLocale }) : '-';
+  const lastTraining = lastTrainingDate ? format(new Date(lastTrainingDate), 'dd. MMMM yyyy', { locale: dateLocale }) : neverLabel;
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" /></div>;
@@ -295,9 +307,15 @@ export default function UserProfile() {
                 {nameError ? <p className="text-xs text-destructive font-body">{nameError}</p> : null}
               </div>
             ) : (
-              <h1 className="font-display text-4xl md:text-5xl tracking-wide text-foreground truncate cursor-pointer hover:text-primary transition-colors" onClick={() => setEditingName(true)} title={copy.clickToChange}>
-                {displayName || copy.guest}
-              </h1>
+              <div>
+                <h1 className="font-display text-4xl md:text-5xl tracking-wide text-foreground truncate cursor-pointer hover:text-primary transition-colors" onClick={() => setEditingName(true)} title={copy.clickToChange}>
+                  {displayName || copy.guest}
+                </h1>
+                <div className="mt-2 space-y-0.5 text-sm font-body text-muted-foreground">
+                  <p>{signedInSinceLabel}: {signedInSince}</p>
+                  <p>{lastTrainingLabel}: {lastTraining}</p>
+                </div>
+              </div>
             )}
           </div>
         </div>

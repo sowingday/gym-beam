@@ -116,7 +116,6 @@ export default function Settings() {
   const [showTotalDur, setShowTotalDur] = useState(getSetting('show_total_dur'));
   const [showExerciseDur, setShowExerciseDur] = useState(getSetting('show_exercise_dur'));
   const [breakBeep, setBreakBeep] = useState(getSetting('break_beep'));
-  const [showGreeting, setShowGreeting] = useState(getSetting('show_greeting'));
   const [countdownStart, setCountdownStart] = useState(() => {
     const value = Number(getSetting('countdown_start'));
     return value > 0 ? String(value) : '';
@@ -354,11 +353,6 @@ export default function Settings() {
         <div className="rounded-xl border border-border bg-card p-5 shadow-[0_8px_40px_0_rgba(0,0,0,0.18)]">
           <GroupTitle>{t('settings.misc')}</GroupTitle>
           <div>
-            <Row label={t('settings.showGreeting')}>
-              <div className="shrink-0">
-                <Toggle value={showGreeting} onChange={setStored('show_greeting', setShowGreeting)} options={[{ label: copy.yes, val: 'true' }, { label: copy.no, val: 'false' }]} />
-              </div>
-            </Row>
             <Row label={t('settings.planZoom')}>
               <select
                 value={planZoom}

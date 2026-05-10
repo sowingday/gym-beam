@@ -18,6 +18,7 @@ export function normalizeSupabaseUser(user) {
     profile_name: pickSupabaseDisplayName(user),
     full_name: user.user_metadata?.full_name || null,
     profile_picture: user.user_metadata?.avatar_url || null,
+    created_at: user.created_at || null,
     auth_source: 'supabase',
     rawUser: user,
   };

@@ -6,7 +6,6 @@ const DEFAULTS = {
   show_total_dur: 'true',
   show_exercise_dur: 'true',
   break_beep: 'true',
-  show_greeting: 'true',
   music_mode: 'all',
   countdown_start: 3,
   countdown_before_end: 0,
@@ -36,7 +35,6 @@ export const getExerciseDir = () => getSetting('exercise_dir');
 export const getShowTotalDur = () => getSetting('show_total_dur') === 'true';
 export const getShowExerciseDur = () => getSetting('show_exercise_dur') === 'true';
 export const getBreakBeep = () => getSetting('break_beep') === 'true';
-export const getShowGreeting = () => getSetting('show_greeting') === 'true';
 export const getCountdownStart = () => getSetting('countdown_start');
 export const getCountdownBeforeEnd = () => getSetting('countdown_before_end');
 export const getMusicMode = () => getSetting('music_mode') || 'all';

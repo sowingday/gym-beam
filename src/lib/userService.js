@@ -81,6 +81,7 @@ function mapSupabaseProfileToAppUser(authUser, profile, local) {
     profile_height: profile?.profile_height ?? local.profile_height ?? null,
     profile_weight: profile?.profile_weight ?? local.profile_weight ?? null,
     profile_picture: profile?.profile_picture || authUser?.profile_picture || local.profile_picture || null,
+    created_at: authUser?.created_at || local.created_at || null,
     _isOnline: true,
     _authSource: 'supabase',
   };
@@ -232,6 +233,7 @@ export function getLocalUser() {
   const newUser = {
     localUserId: generateLocalId(),
     displayName: generateGuestName(),
+    created_at: new Date().toISOString(),
     username: null,
     profile_gender: null,
     profile_age: null,

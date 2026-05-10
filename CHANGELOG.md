@@ -12,6 +12,13 @@ Dieses Projekt nutzt ein einfaches, manuell gepflegtes Changelog.
 ### Changed
 - Workout-Uebungslisten werden jetzt bevorzugt ueber die neue Tabelle `workout_exercises` gelesen und geschrieben.
 - Bestehende JSON-Uebungslisten aus `workouts.exercises` werden bei Bedarf serverseitig in das neue Modell uebernommen.
+- Profilseite zeigt jetzt `Angemeldet seit` und `Letztes Training` direkt unter dem Benutzernamen an.
+
+### Removed
+- Begruessungsmeldung beim App-Start inklusive zugehoeriger Einstellung aus der App entfernt.
+
+### Fixed
+- Lokale Profile behalten jetzt auch ohne Supabase ein `created_at`, damit das Anmeldedatum im Profil konsistent angezeigt werden kann.
 
 ## 2026-05-08
 
