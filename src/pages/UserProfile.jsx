@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Save, UserPlus, X, ChevronDown } from 'lucide-react';
+import { Save, UserPlus, X } from 'lucide-react';
 import CategorySelect from '../components/CategorySelect';
 import InboxMessages from '../components/InboxMessages';
 import { Button } from '@/components/ui/button';
@@ -54,7 +54,6 @@ export default function UserProfile() {
       pictureError: 'Upload failed.',
       guest: 'Guest',
       clickToChange: 'Click to change',
-      profileSettings: 'Profile settings',
       gender: 'Gender',
       optional: 'optional',
       male: 'Male',
@@ -93,7 +92,6 @@ export default function UserProfile() {
       pictureError: 'Fehler beim Hochladen.',
       guest: 'Gast',
       clickToChange: 'Klicken zum Ändern',
-      profileSettings: 'Profil-Einstellungen',
       gender: 'Geschlecht',
       optional: 'optional',
       male: 'Männlich',
@@ -127,7 +125,6 @@ export default function UserProfile() {
   const [profileAge, setProfileAge] = useState('');
   const [profileHeight, setProfileHeight] = useState('');
   const [profileWeight, setProfileWeight] = useState('');
-  const [profileOpen, setProfileOpen] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState('');
   const [nameError, setNameError] = useState('');
@@ -289,14 +286,14 @@ export default function UserProfile() {
     <div className="min-h-screen bg-background pb-24">
       <div className="max-w-2xl mx-auto px-4 py-6">
         <div className="flex items-center gap-4 mb-8">
-          <div className="relative shrink-0 self-end">
-            <div className="w-16 h-16 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center overflow-hidden cursor-pointer" onClick={() => !uploadingPic && fileRef.current?.click()} title={copy.clickAvatar}>
-              {uploadingPic ? <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" /> : me?.profile_picture ? <img src={me.profile_picture} alt="Profile" className="w-full h-full object-cover" /> : <span className="font-display text-2xl text-primary">{displayName?.[0]?.toUpperCase() || '?'}</span>}
+          <div className="relative shrink-0">
+            <div className="w-24 h-24 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center overflow-hidden cursor-pointer" onClick={() => !uploadingPic && fileRef.current?.click()} title={copy.clickAvatar}>
+              {uploadingPic ? <div className="w-7 h-7 border-2 border-primary border-t-transparent rounded-full animate-spin" /> : me?.profile_picture ? <img src={me.profile_picture} alt="Profile" className="w-full h-full object-cover" /> : <span className="font-display text-4xl text-primary">{displayName?.[0]?.toUpperCase() || '?'}</span>}
             </div>
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePictureChange} />
           </div>
 
-          <div className="flex-1 min-w-0 self-end">
+          <div className="flex-1 min-w-0">
             {editingName ? (
               <div className="space-y-1">
                 <div className="flex gap-2 items-center">
@@ -311,7 +308,7 @@ export default function UserProfile() {
                 <h1 className="font-display text-4xl md:text-5xl tracking-wide text-foreground truncate cursor-pointer hover:text-primary transition-colors" onClick={() => setEditingName(true)} title={copy.clickToChange}>
                   {displayName || copy.guest}
                 </h1>
-                <div className="mt-1 space-y-0.5 text-sm font-body text-muted-foreground">
+                <div className="mt-1 space-y-0.5 text-xs font-body text-muted-foreground">
                   <p>{signedInSinceLabel}: {signedInSince}</p>
                   <p>{lastTrainingLabel}: {lastTraining}</p>
                 </div>
@@ -320,24 +317,22 @@ export default function UserProfile() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-border bg-card overflow-hidden shadow-[0_6px_20px_0_rgba(0,0,0,0.18)] mb-6">
-          <button className="w-full flex items-center justify-between px-5 py-4 text-sm font-semibold font-body text-foreground" onClick={() => setProfileOpen((open) => !open)}>
-            <span>{copy.profileSettings}</span>
-            <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${profileOpen ? 'rotate-180' : ''}`} />
-          </button>
-          {profileOpen ? (
-            <div className="px-5 pb-5 space-y-5 border-t border-border">
-              <div className="pt-4">
-                <Field label={copy.gender}>
-                  <CategorySelect value={profileGender} onChange={setProfileGender} placeholder={`-- ${copy.optional} --`} options={[{ value: '', label: `-- ${copy.optional} --` }, { value: 'maennlich', label: copy.male }, { value: 'weiblich', label: copy.female }, { value: 'divers', label: copy.diverse }]} />
-                </Field>
-              </div>
-              <Field label={copy.age}><Input type="text" inputMode="numeric" pattern="[0-9]*" value={profileAge} onChange={(e) => setProfileAge(e.target.value.replace(/[^0-9]/g, ''))} placeholder={copy.optional} className="font-body" /></Field>
-              <Field label={copy.height}><Input type="text" inputMode="numeric" pattern="[0-9]*" value={profileHeight} onChange={(e) => setProfileHeight(e.target.value.replace(/[^0-9]/g, ''))} placeholder={copy.optional} className="font-body" /></Field>
-              <Field label={copy.weight} required hint={copy.weightHint}><Input type="text" inputMode="decimal" value={profileWeight} onChange={(e) => setProfileWeight(e.target.value.replace(/[^0-9.,]/g, ''))} placeholder={copy.optional} className="font-body" /></Field>
-              <Button onClick={handleSave} disabled={saving} className="w-full font-body gap-2 shadow-[0_4px_12px_0_rgba(0,0,0,0.18)]"><Save className="w-4 h-4" />{saving ? copy.saving : copy.save}</Button>
-            </div>
-          ) : null}
+        <div className="rounded-xl border border-border bg-card p-5 shadow-[0_6px_20px_0_rgba(0,0,0,0.18)] mb-6">
+          <div className="grid grid-cols-2 gap-4">
+            <Field label={copy.gender}>
+              <CategorySelect value={profileGender} onChange={setProfileGender} placeholder={`-- ${copy.optional} --`} options={[{ value: '', label: `-- ${copy.optional} --` }, { value: 'maennlich', label: copy.male }, { value: 'weiblich', label: copy.female }, { value: 'divers', label: copy.diverse }]} />
+            </Field>
+            <Field label={copy.height}>
+              <Input type="text" inputMode="numeric" pattern="[0-9]*" value={profileHeight} onChange={(e) => setProfileHeight(e.target.value.replace(/[^0-9]/g, ''))} placeholder={copy.optional} className="font-body" />
+            </Field>
+            <Field label={copy.age}>
+              <Input type="text" inputMode="numeric" pattern="[0-9]*" value={profileAge} onChange={(e) => setProfileAge(e.target.value.replace(/[^0-9]/g, ''))} placeholder={copy.optional} className="font-body" />
+            </Field>
+            <Field label={copy.weight} required hint={copy.weightHint}>
+              <Input type="text" inputMode="decimal" value={profileWeight} onChange={(e) => setProfileWeight(e.target.value.replace(/[^0-9.,]/g, ''))} placeholder={copy.optional} className="font-body" />
+            </Field>
+          </div>
+          <Button onClick={handleSave} disabled={saving} className="w-full mt-5 font-body gap-2 shadow-[0_4px_12px_0_rgba(0,0,0,0.18)]"><Save className="w-4 h-4" />{saving ? copy.saving : copy.save}</Button>
         </div>
 
         {onlineAvailable ? <InboxMessages /> : null}
