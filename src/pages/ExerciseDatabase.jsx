@@ -4,9 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { PersonStanding } from 'lucide-react';
 import BottomNav from '../components/BottomNav';
 import ExerciseFilterTable from '../components/ExerciseFilterTable';
-import { getLocalExercises } from '../lib/localExercises';
+import { filterExercisesForProfileGender, getLocalExercises } from '../lib/localExercises';
 import { getFavoriteIds, toggleFavorite } from '../lib/favorites';
 import { useI18n } from '../lib/i18n';
+import { getCurrentUser } from '../lib/userService';
 
 export default function ExerciseDatabase() {
   const navigate = useNavigate();
@@ -18,6 +19,17 @@ export default function ExerciseDatabase() {
     queryFn: async () => getLocalExercises(language),
     retry: false,
   });
+
+  const { data: currentUser } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: getCurrentUser,
+    staleTime: 60_000,
+  });
+
+  const visibleExercises = React.useMemo(
+    () => filterExercisesForProfileGender(exercises, currentUser?.profile_gender || ''),
+    [currentUser?.profile_gender, exercises],
+  );
 
   const handleSelect = (exercise) => {
     const key = exercise.exercise_index ?? exercise.index ?? exercise.id;
@@ -62,14 +74,14 @@ export default function ExerciseDatabase() {
           </h1>
         </div>
 
-        {exercises.length === 0 ? (
+        {visibleExercises.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground font-body mb-2">{t('exercises.empty')}</p>
             <p className="text-sm text-muted-foreground font-body">{t('exercises.uploadHint')}</p>
           </div>
         ) : (
           <ExerciseFilterTable
-            exercises={exercises}
+            exercises={visibleExercises}
             onSelect={handleSelect}
             onToggleFavorite={handleToggleFavorite}
             favoriteIds={getFavoriteIds()}

@@ -4,13 +4,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckSquare, Square, CheckCircle2, PersonStanding } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ExerciseFilterTable from '../components/ExerciseFilterTable';
-import { getLocalExercises } from '../lib/localExercises';
+import { filterExercisesForProfileGender, getLocalExercises } from '../lib/localExercises';
 import { getFavoriteIds, toggleFavorite } from '../lib/favorites';
 import { getExerciseKey } from '../lib/normalize';
 import { useI18n } from '../lib/i18n';
 import { getWorkoutById, updateWorkout } from '../lib/workoutDataService';
 import { reindexWorkoutExercises } from '../lib/workoutExerciseStore';
 import { toast } from 'sonner';
+import { getCurrentUser } from '../lib/userService';
 
 export default function ExerciseSelection() {
   const { workoutId } = useParams();
@@ -30,6 +31,17 @@ export default function ExerciseSelection() {
     queryFn: async () => getLocalExercises(language),
     retry: false,
   });
+
+  const { data: currentUser } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: getCurrentUser,
+    staleTime: 60_000,
+  });
+
+  const visibleExercises = React.useMemo(
+    () => filterExercisesForProfileGender(exercises, currentUser?.profile_gender || ''),
+    [currentUser?.profile_gender, exercises],
+  );
 
   const { data: workout } = useQuery({
     queryKey: ['workout', workoutId],
@@ -74,7 +86,7 @@ export default function ExerciseSelection() {
   };
 
   const handleAddChecked = () => {
-    const toAdd = exercises.filter((exercise) => checkedIds.has(getExerciseKey(exercise)));
+    const toAdd = visibleExercises.filter((exercise) => checkedIds.has(getExerciseKey(exercise)));
     if (!toAdd.length) return;
     const currentExercises = Array.isArray(workout?.exercises) ? workout.exercises : [];
     const newEntries = toAdd.map((exercise) => {
@@ -150,7 +162,7 @@ export default function ExerciseSelection() {
         </div>
 
         <ExerciseFilterTable
-          exercises={exercises}
+          exercises={visibleExercises}
           onSelect={handleRowClick}
           selectedId={null}
           onToggleFavorite={handleToggleFavorite}

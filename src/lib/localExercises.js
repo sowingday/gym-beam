@@ -29,6 +29,57 @@ export function i18nArray(arr, lang = 'de') {
   return arr.map((item) => i18nGet(item, lang)).filter(Boolean);
 }
 
+export function normalizeExerciseGender(value) {
+  const text = String(value || '').trim().toLowerCase();
+  if (['m', 'male', 'mann', 'maennlich'].includes(text)) return 'm';
+  if (['w', 'female', 'frau', 'weiblich'].includes(text)) return 'w';
+  return '';
+}
+
+export function mapProfileGenderToExerciseGender(profileGender) {
+  const text = String(profileGender || '').trim().toLowerCase();
+  if (text === 'maennlich') return 'm';
+  if (text === 'weiblich') return 'w';
+  return '';
+}
+
+function getExerciseDuplicateNameKey(exercise) {
+  const name = typeof exercise?.i18n?.name?.de === 'string'
+    ? exercise.i18n.name.de
+    : exercise?.name;
+  return String(name || '').trim().toLowerCase();
+}
+
+export function filterExercisesForProfileGender(exercises, profileGender) {
+  const targetGender = mapProfileGenderToExerciseGender(profileGender);
+  if (!targetGender) return Array.isArray(exercises) ? exercises : [];
+
+  const groups = new Map();
+  for (const exercise of Array.isArray(exercises) ? exercises : []) {
+    const key = getExerciseDuplicateNameKey(exercise);
+    if (!key) continue;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(exercise);
+  }
+
+  const result = [];
+  for (const exercise of Array.isArray(exercises) ? exercises : []) {
+    const key = getExerciseDuplicateNameKey(exercise);
+    const group = key ? groups.get(key) || [exercise] : [exercise];
+    const genders = new Set(group.map((item) => normalizeExerciseGender(item?.gender)));
+    const hasMaleAndFemale = genders.has('m') && genders.has('w');
+    if (!hasMaleAndFemale) {
+      result.push(exercise);
+      continue;
+    }
+    const exerciseGender = normalizeExerciseGender(exercise?.gender);
+    if (exerciseGender === targetGender) {
+      result.push(exercise);
+    }
+  }
+  return result;
+}
+
 function toArrayValue(value, lang = 'de') {
   if (Array.isArray(value)) return value.map((item) => i18nGet(item, lang)).filter(Boolean);
   if (typeof value === 'string') return value.split(',').map((item) => item.trim()).filter(Boolean);
@@ -118,6 +169,7 @@ export function localizeExerciseRecord(ex, lang = 'de', fallbackExercise = null)
     musclesLatin,
     tips: notes,
     animation_type: ex.animation_type || ex.animationKey || fallbackExercise?.animation_type || fallbackExercise?.animationKey || '',
+    gender: normalizeExerciseGender(ex.gender || fallbackExercise?.gender || ''),
     video_url: ex.video_url || fallbackExercise?.video_url || '',
     shortDescription: description,
     notes,
