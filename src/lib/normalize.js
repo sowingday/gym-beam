@@ -78,6 +78,7 @@ export function normalizeExercise(e) {
     ...e,
     exercise_index,
     gender: typeof e.gender === 'string' ? e.gender.trim().toLowerCase() : '',
+    genderVariantGroup: typeof e.genderVariantGroup === 'string' ? e.genderVariantGroup.trim() : '',
     categories: toArray(e.categories),
     muscles: toArray(e.muscles),
     musclesLatin: toArray(e.musclesLatin),

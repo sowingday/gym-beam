@@ -36,6 +36,10 @@ export function normalizeExerciseGender(value) {
   return '';
 }
 
+export function normalizeExerciseVariantGroup(value) {
+  return String(value || '').trim();
+}
+
 export function mapProfileGenderToExerciseGender(profileGender) {
   const text = String(profileGender || '').trim().toLowerCase();
   if (text === 'maennlich') return 'm';
@@ -43,39 +47,37 @@ export function mapProfileGenderToExerciseGender(profileGender) {
   return '';
 }
 
-function getExerciseDuplicateNameKey(exercise) {
-  const name = typeof exercise?.i18n?.name?.de === 'string'
-    ? exercise.i18n.name.de
-    : exercise?.name;
-  return String(name || '').trim().toLowerCase();
-}
-
 export function filterExercisesForProfileGender(exercises, profileGender) {
   const targetGender = mapProfileGenderToExerciseGender(profileGender);
   if (!targetGender) return Array.isArray(exercises) ? exercises : [];
 
-  const groups = new Map();
-  for (const exercise of Array.isArray(exercises) ? exercises : []) {
-    const key = getExerciseDuplicateNameKey(exercise);
+  const variantGroups = new Map();
+  const source = Array.isArray(exercises) ? exercises : [];
+  for (const exercise of source) {
+    const key = normalizeExerciseVariantGroup(exercise?.genderVariantGroup);
     if (!key) continue;
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push(exercise);
+    if (!variantGroups.has(key)) variantGroups.set(key, []);
+    variantGroups.get(key).push(exercise);
   }
 
   const result = [];
-  for (const exercise of Array.isArray(exercises) ? exercises : []) {
-    const key = getExerciseDuplicateNameKey(exercise);
-    const group = key ? groups.get(key) || [exercise] : [exercise];
-    const genders = new Set(group.map((item) => normalizeExerciseGender(item?.gender)));
-    const hasMaleAndFemale = genders.has('m') && genders.has('w');
-    if (!hasMaleAndFemale) {
+  for (const exercise of source) {
+    const variantGroup = normalizeExerciseVariantGroup(exercise?.genderVariantGroup);
+    if (!variantGroup) {
       result.push(exercise);
       continue;
     }
-    const exerciseGender = normalizeExerciseGender(exercise?.gender);
-    if (exerciseGender === targetGender) {
+    const group = variantGroups.get(variantGroup) || [exercise];
+    if (group.length <= 1) {
       result.push(exercise);
+      continue;
     }
+    const matching = group.filter((item) => normalizeExerciseGender(item?.gender) === targetGender);
+    if (matching.length > 0) {
+      if (normalizeExerciseGender(exercise?.gender) === targetGender) result.push(exercise);
+      continue;
+    }
+    result.push(exercise);
   }
   return result;
 }
@@ -170,6 +172,7 @@ export function localizeExerciseRecord(ex, lang = 'de', fallbackExercise = null)
     tips: notes,
     animation_type: ex.animation_type || ex.animationKey || fallbackExercise?.animation_type || fallbackExercise?.animationKey || '',
     gender: normalizeExerciseGender(ex.gender || fallbackExercise?.gender || ''),
+    genderVariantGroup: normalizeExerciseVariantGroup(ex.genderVariantGroup || fallbackExercise?.genderVariantGroup || ''),
     video_url: ex.video_url || fallbackExercise?.video_url || '',
     shortDescription: description,
     notes,
