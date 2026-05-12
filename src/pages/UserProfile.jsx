@@ -36,6 +36,13 @@ function parseOptionalNumber(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function getDisplayNameClasses(name) {
+  const length = String(name || '').trim().length;
+  if (length > 24) return 'text-2xl md:text-3xl';
+  if (length > 18) return 'text-3xl md:text-4xl';
+  return 'text-4xl md:text-5xl';
+}
+
 export default function UserProfile() {
   const navigate = useNavigate();
   const fileRef = useRef(null);
@@ -80,7 +87,7 @@ export default function UserProfile() {
       never: 'No training yet',
     }
     : {
-      nameRequired: 'Name ist ein Pflichtfeld.',
+      nameRequired: 'Ein Name ist erforderlich.',
       nameMin: 'Mindestens 4 Zeichen erforderlich.',
       nameTaken: 'Dieser Benutzername ist bereits vergeben.',
       savedLocal: 'Lokal gespeichert.',
@@ -297,7 +304,7 @@ export default function UserProfile() {
             {editingName ? (
               <div className="space-y-1">
                 <div className="flex gap-2 items-center">
-                  <Input autoFocus value={nameValue} onChange={(e) => { setNameValue(e.target.value); setNameError(''); }} onKeyDown={(e) => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') { setEditingName(false); setNameValue(displayName); setNameError(''); } }} className="font-body h-9 text-base" maxLength={40} placeholder={copy.displayNamePlaceholder} />
+                  <Input autoFocus value={nameValue} onChange={(e) => { setNameValue(e.target.value); setNameError(''); }} onKeyDown={(e) => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') { setEditingName(false); setNameValue(displayName); setNameError(''); } }} className="font-body h-9 text-base" maxLength={30} placeholder={copy.displayNamePlaceholder} />
                   <Button size="sm" onClick={handleSaveName} disabled={savingName} className="shrink-0">{savingName ? '...' : <Save className="w-4 h-4" />}</Button>
                   <button onClick={() => { setEditingName(false); setNameValue(displayName); setNameError(''); }} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
                 </div>
@@ -305,7 +312,7 @@ export default function UserProfile() {
               </div>
             ) : (
               <div>
-                <h1 className="font-display text-4xl md:text-5xl tracking-wide text-foreground truncate cursor-pointer hover:text-primary transition-colors" onClick={() => setEditingName(true)} title={copy.clickToChange}>
+                <h1 className={`font-display ${getDisplayNameClasses(displayName || copy.guest)} tracking-wide leading-tight text-foreground break-words cursor-pointer hover:text-primary transition-colors`} onClick={() => setEditingName(true)} title={copy.clickToChange}>
                   {displayName || copy.guest}
                 </h1>
                 <div className="mt-1 space-y-0.5 text-xs font-body text-muted-foreground">
