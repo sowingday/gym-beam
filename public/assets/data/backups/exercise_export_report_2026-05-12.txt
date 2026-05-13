@@ -1,0 +1,14 @@
+Exercise Audit Tool Export
+Zeit: 2026-05-12 03:57:54
+Excel: C:\Data\Gym-Beam\Animations\exercises v3.xlsx
+Sheet: Exercises
+Header-Zeile: 6
+Exportierte Übungen: 1148
+Dubletten nach Name: 140
+Fehlende Animationen: 0
+
+Warnungen:
+Keine.
+
+Fehlende Animationen:
+Keine.
