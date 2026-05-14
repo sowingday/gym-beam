@@ -1,0 +1,10 @@
+{
+  "excel_file": "C:\\Data\\Gym-Beam\\Animations\\exercises v3.xlsx",
+  "app_json_file": "C:\\Data\\Gym-Beam\\gym-beam\\public\\assets\\data\\exercises.json",
+  "animations_dir": "C:\\Data\\Gym-Beam\\gym-beam\\public\\assets\\animations",
+  "export_report_file": "C:\\Data\\Gym-Beam\\gym-beam\\public\\assets\\data\\backups\\exercise_export_report.txt",
+  "ai_enabled": false,
+  "ai_base_url": "https://api.openai.com/v1",
+  "ai_model": "gpt-4.1-mini",
+  "ai_api_key": ""
+}

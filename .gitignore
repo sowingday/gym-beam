@@ -30,3 +30,8 @@ dist-ssr
 .env
 .vite
 android/gradle/gradle-daemon-jvm.properties
+
+# Local tool config and Python cache
+tools/exercise-audit-tool/exercise_audit_tool.local.json
+tools/exercise-audit-tool/__pycache__/
+tools/exercise-audit-tool/*.pyc
